@@ -1,0 +1,19 @@
+# 컴파일된 파일 및 빌드 폴더 무시
+target/
+dist/
+build/
+out/
+*.class
+*.jar
+*.war
+*.ear
+
+# NetBeans 설정 중 개인 설정 무시 (중요!)
+nbproject/private/
+build.xml
+nbbuild.xml
+dist.xml
+
+# Mac/Windows 시스템 파일 무시
+.DS_Store
+Thumbs.db
