@@ -2,8 +2,8 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package cse.oop2.hms_project_client.view;
-import cse.oop2.hms_project_client.net.NetworkService;
+package client.view;
+import client.net.NetworkService;
 
 import javax.swing.*;
 import java.awt.*;

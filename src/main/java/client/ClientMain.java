@@ -1,10 +1,9 @@
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  */
-
-package cse.oop2.hms_project_client;
-import cse.oop2.hms_project_client.net.NetworkService;
-import cse.oop2.hms_project_client.view.LoginFrame;
+package client;
+import client.net.NetworkService;
+import client.view.LoginFrame;
 /**
  *
  * @author user
