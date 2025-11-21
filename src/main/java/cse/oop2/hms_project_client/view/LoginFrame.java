@@ -15,7 +15,6 @@ import java.awt.event.ActionListener;
  */
 public class LoginFrame extends JFrame {
 
-    // ⭐️ UI 컴포넌트 ⭐️ (기존 코드 유지)
     private final JTextField userIdField;
     private final JPasswordField passwordField;
     private final JButton loginButton;
@@ -116,7 +115,7 @@ public class LoginFrame extends JFrame {
                 JOptionPane.showMessageDialog(this, "로그인 성공! (" + role + ")");
 
                 // [화면 전환] 메인 프레임 열기
-                //new MainFrame(role).setVisible(true);
+                new MainFrame(role).setVisible(true);
 
                 // [화면 전환] 현재 로그인 창 닫기
                 this.dispose();
