@@ -63,6 +63,8 @@ public class MainFrame extends JFrame {
         this.setSize(800, 600);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setLocationRelativeTo(null); 
+        
+        userManagementButton.addActionListener(this::handleUserManagementClick); //직원 관리 클릭
     }
     
     private void applyAuthorization(String role) {
@@ -80,16 +82,8 @@ public class MainFrame extends JFrame {
     }
     
     private void handleUserManagementClick(ActionEvent e) {
-        System.out.println("[클라이언트] 직원 관리 화면 열기 시도");
+        System.out.println("[클라이언트] 직원 관리 화면");
         
-        // 1. 서버에 데이터 요청이 필요하다면 여기서 수행
-        // String response = NetworkService.getInstance().sendRequest("GET_ALL_USERS");
-        
-        // 2. 새로운 화면(UserManagementFrame) 열기
-        // 주의: UserManagementView(또는 Frame)도 클라이언트용으로 새로 만들어야 함
-        JOptionPane.showMessageDialog(this, "직원 관리 화면은 아직 구현되지 않았습니다.");
-        
-        // 예시: 구현 후 주석 해제
-        // new UserManagementFrame().setVisible(true);
+        new UserManagementFrame().setVisible(true);
     }
 }
