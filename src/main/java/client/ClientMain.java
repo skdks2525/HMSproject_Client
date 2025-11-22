@@ -14,8 +14,11 @@ public class ClientMain {
         System.out.println("클라이언트 프로그램 실행");
         
         NetworkService.getInstance().connect(); // 서버 연결 시도
-        new LoginFrame();
         
+        java.awt.EventQueue.invokeLater(()-> {
+            LoginFrame login = new LoginFrame();
+            login.setVisible(true);
+        });
         //String response = NetworkService.getInstance().sendRequest("LOGIN:adin:admin123");
     }
 }

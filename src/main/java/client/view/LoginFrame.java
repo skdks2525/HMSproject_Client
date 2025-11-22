@@ -1,138 +1,130 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package client.view;
+
 import client.net.NetworkService;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
-/**
- *
- * @author user
- */
 public class LoginFrame extends JFrame {
 
-    private final JTextField userIdField;
-    private final JPasswordField passwordField;
-    private final JButton loginButton;
-
-    /**
-     * 생성자
-     * [변경] 파라미터로 UserService를 받지 않습니다. 
-     * 클라이언트는 데이터베이스에 직접 접근하지 않기 때문입니다.
-     */
     public LoginFrame() {
-        super("호텔 관리 시스템 - 로그인");
-
-        // 1. 컴포넌트 초기화
-        this.userIdField = new JTextField(15);
-        this.passwordField = new JPasswordField(15);
-        this.loginButton = new JButton("로그인");
-
-        // 2. UI 디자인 및 레이아웃 구성 (작성하신 GridBagLayout 유지)
-        initializeUI();
-
-        // 3. 이벤트 리스너 연결
-        setupEventListeners();
-        
-        // 4. 창 설정
-        this.setSize(350, 250); // 높이를 조금 늘렸습니다.
-        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        this.setLocationRelativeTo(null); // 화면 중앙 표시
-        
-        // [추가] 생성 즉시 화면에 보이게 설정
-        this.setVisible(true);
+        initComponents();
+        this.setLocationRelativeTo(null); // 화면 중앙 배치
     }
 
-    private void initializeUI() {
-        // 메인 패널 생성 (기존 코드 유지)
-        JPanel panel = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 5);
+    private void initComponents() {
 
-        // --- User ID ---
-        gbc.gridx = 0; gbc.gridy = 0;
-        panel.add(new JLabel("ID:"), gbc);
+        JPanel bgPanel = new JPanel();
+        bgPanel.setLayout(null);
+        bgPanel.setBackground(new Color(255, 255, 255));
+        bgPanel.setPreferredSize(new Dimension(800, 500));
 
-        gbc.gridx = 1; gbc.gridy = 0;
-        panel.add(userIdField, gbc);
+        JPanel sidePanel = new JPanel();
+        sidePanel.setBackground(new Color(204, 255, 204)); // 연한 초록색
+        sidePanel.setBounds(0, 0, 400, 500);
+        sidePanel.setLayout(new GridBagLayout()); // 중앙 정렬용
 
-        // --- Password ---
-        gbc.gridx = 0; gbc.gridy = 1;
-        panel.add(new JLabel("PW:"), gbc);
-
-        gbc.gridx = 1; gbc.gridy = 1;
-        panel.add(passwordField, gbc);
-
-        // --- Login Button ---
-        gbc.gridx = 1; gbc.gridy = 2;
-        gbc.gridwidth = 1;
-        gbc.anchor = GridBagConstraints.EAST;
-        panel.add(loginButton, gbc);
-
-        this.add(panel);
-    }
-    
-    private void setupEventListeners() {
-        // 람다식으로 로그인 시도 메서드 연결
-        loginButton.addActionListener(e -> performLogin());
-        passwordField.addActionListener(e -> performLogin());
-    }
-
-    /**
-     * [핵심 변경] 로그인 시도 로직
-     * 기존: LoginController -> UserService (로컬 처리)
-     * 변경: NetworkService -> Server (네트워크 요청)
-     */
-    private void performLogin() {
-        String id = userIdField.getText().trim();
-        String pw = new String(passwordField.getPassword()).trim();
+        JLabel lblLogo = new JLabel("HOTEL SYSTEM");
+        lblLogo.setFont(new Font("맑은 고딕", Font.BOLD, 30));
+        lblLogo.setForeground(new Color(0, 102, 51));
+        // 아이콘이 있다면 아래 주석 해제
+        // lblLogo.setIcon(new ImageIcon(getClass().getResource("/images/logo.png")));
+        sidePanel.add(lblLogo);
         
-        // 1. 유효성 검사
-        if (id.isEmpty() || pw.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "아이디와 비밀번호를 입력하세요.", "알림", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
+        bgPanel.add(sidePanel);
 
-        // 2. 서버로 보낼 메시지 생성 (프로토콜: "LOGIN:아이디:비번")
-        String request = "LOGIN:" + id + ":" + pw;
+        // --- [오른쪽 패널] 입력 폼 영역 (기존 Left 패널) ---
+        JPanel formPanel = new JPanel();
+        formPanel.setBackground(new Color(255, 255, 255));
+        formPanel.setBounds(400, 0, 400, 500);
+        formPanel.setLayout(null);
 
-        try {
-            // 3. 서버에 전송하고 응답 대기
-            String response = NetworkService.getInstance().sendRequest(request);
+        JLabel lblTitle = new JLabel("LOGIN");
+        lblTitle.setFont(new Font("맑은 고딕", Font.BOLD, 36));
+        lblTitle.setForeground(new Color(0, 102, 51));
+        lblTitle.setBounds(140, 50, 150, 50);
+        formPanel.add(lblTitle);
 
-            // 4. 응답 처리
+        JLabel lblEmail = new JLabel("ID (Email)");
+        lblEmail.setFont(new Font("맑은 고딕", Font.PLAIN, 14));
+        lblEmail.setBounds(40, 130, 100, 20);
+        formPanel.add(lblEmail);
+
+        JTextField txtEmail = new JTextField();
+        txtEmail.setFont(new Font("맑은 고딕", Font.PLAIN, 14));
+        txtEmail.setBounds(40, 150, 320, 40);
+        formPanel.add(txtEmail);
+
+        JLabel lblPw = new JLabel("Password");
+        lblPw.setFont(new Font("맑은 고딕", Font.PLAIN, 14));
+        lblPw.setBounds(40, 210, 100, 20);
+        formPanel.add(lblPw);
+
+        JPasswordField txtPass = new JPasswordField();
+        txtPass.setFont(new Font("맑은 고딕", Font.PLAIN, 14));
+        txtPass.setBounds(40, 230, 320, 40);
+        formPanel.add(txtPass);
+
+        // 로그인 버튼
+        JButton btnLogin = new JButton("LOGIN");
+        btnLogin.setBackground(new Color(204, 255, 204));
+        btnLogin.setForeground(new Color(0, 102, 51));
+        btnLogin.setFont(new Font("맑은 고딕", Font.BOLD, 14));
+        btnLogin.setBounds(40, 300, 100, 40);
+        formPanel.add(btnLogin);
+
+        JLabel lblNoAccount = new JLabel("I don't have an account");
+        lblNoAccount.setBounds(40, 360, 150, 30);
+        formPanel.add(lblNoAccount);
+
+        // 회원가입 이동 버튼
+        JButton btnSignUp = new JButton("Sign Up");
+        btnSignUp.setForeground(new Color(255, 51, 51));
+        btnSignUp.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+        btnSignUp.setBorderPainted(false);
+        btnSignUp.setContentAreaFilled(false);
+        btnSignUp.setBounds(180, 360, 80, 30);
+        formPanel.add(btnSignUp);
+
+        bgPanel.add(formPanel);
+
+        // 프레임 설정
+        setContentPane(bgPanel);
+        setTitle("Login");
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        pack();
+
+        // --- 이벤트 리스너 ---
+        
+        // 1. 로그인 버튼 동작
+        btnLogin.addActionListener(e -> {
+            String id = txtEmail.getText().trim();
+            String pw = new String(txtPass.getPassword()).trim();
+
+            if(id.isEmpty() || pw.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "아이디와 비밀번호를 입력하세요.");
+                return;
+            }
+
+            // 서버 통신
+            String response = NetworkService.getInstance().sendRequest("LOGIN:" + id + ":" + pw);
+
             if (response != null && response.startsWith("LOGIN_SUCCESS")) {
-                // --- 로그인 성공 ---
-                
-                // 서버 응답 파싱 (예: "LOGIN_SUCCESS:Manager")
                 String[] parts = response.split(":");
                 String role = (parts.length > 1) ? parts[1] : "Unknown";
-
+                
                 JOptionPane.showMessageDialog(this, "로그인 성공! (" + role + ")");
-
-                // [화면 전환] 메인 프레임 열기
-                new MainFrame(role).setVisible(true);
-
-                // [화면 전환] 현재 로그인 창 닫기
+                new MainFrame(role).setVisible(true); // 메인 화면 이동
                 this.dispose();
-
             } else {
-                // --- 로그인 실패 ---
-                String msg = "로그인 실패";
-                if (response != null && response.contains(":")) {
-                    msg = response.split(":")[1]; // 에러 메시지 추출
-                } else if (response == null) {
-                    msg = "서버 연결 실패";
-                }
+                String msg = (response != null && response.contains(":")) ? response.split(":")[1] : "로그인 실패";
                 JOptionPane.showMessageDialog(this, msg, "에러", JOptionPane.ERROR_MESSAGE);
             }
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            JOptionPane.showMessageDialog(this, "시스템 오류: " + ex.getMessage());
-        }
+        });
+
+        // 2. 회원가입 버튼 동작 -> RegisterFrame 열기
+        btnSignUp.addActionListener(e -> {
+            new RegisterFrame().setVisible(true);
+            this.dispose(); // 로그인 창 닫기
+        });
     }
 }
