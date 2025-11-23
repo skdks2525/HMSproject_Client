@@ -113,7 +113,7 @@ public class LoginFrame extends JFrame {
                 String role = (parts.length > 1) ? parts[1] : "Unknown";
                 
                 JOptionPane.showMessageDialog(this, "로그인 성공! (" + role + ")");
-                new MainFrame(role).setVisible(true); // 메인 화면 이동
+                new MainFrame(id, role).setVisible(true); // 메인 화면 이동
                 this.dispose();
             } else {
                 String msg = (response != null && response.contains(":")) ? response.split(":")[1] : "로그인 실패";

@@ -7,8 +7,10 @@ import java.awt.*;
 public class RoomManagementFrame extends JFrame {
 
     private JTextArea outputArea;
-
-    public RoomManagementFrame() {
+    private String userName;
+    
+    public RoomManagementFrame(String userName) {
+        this.userName = userName;
         setTitle("호텔 객실 및 예약 관리 시스템");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setSize(1000, 800);
@@ -29,8 +31,8 @@ public class RoomManagementFrame extends JFrame {
 
         JTabbedPane tabbedPane = new JTabbedPane(); // 탭패널
        
-        tabbedPane.addTab("예약 관리", new ReservationPanel());
-        tabbedPane.addTab("객실 조회", new RoomStatusPanel(outputArea));
+        tabbedPane.addTab("객실 예약", new ReservationPanel(userName));
+        tabbedPane.addTab("내 예약 확인", new MyReservationPanel(userName));
         
         
         add(tabbedPane, BorderLayout.NORTH);

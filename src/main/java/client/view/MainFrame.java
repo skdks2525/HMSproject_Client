@@ -15,7 +15,8 @@ import java.awt.event.ActionEvent;
 public class MainFrame extends JFrame {
     
     private final String userRole; //Manager.CSR,CUSTOMER
-
+    private final String userId;
+    
     // 관리자 전용 메뉴
     private final JButton userManagementButton;
     private final JButton systemReportButton;
@@ -29,8 +30,9 @@ public class MainFrame extends JFrame {
     private final JButton logoutButton;
 
 
-    public MainFrame(String role) {
+    public MainFrame(String userId, String role) {
         super("호텔 관리 시스템 - " + role); // 창 제목에 권한 표시
+        this.userId = userId;
         this.userRole = role;
         this.setLayout(new BorderLayout());
         userManagementButton = new JButton("직원/권한 관리");
@@ -93,7 +95,7 @@ public class MainFrame extends JFrame {
     
     private void handleRoomManagementClick(ActionEvent e) {
         System.out.println("예약 조회 화면");
-        new RoomManagementFrame().setVisible(true);
+        new RoomManagementFrame(userId).setVisible(true);
     }
     
     private void handleLogout(ActionEvent e) {
