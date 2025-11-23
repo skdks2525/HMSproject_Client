@@ -11,11 +11,9 @@ public class RoomManagementFrame extends JFrame {
     public RoomManagementFrame() {
         setTitle("호텔 객실 및 예약 관리 시스템");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        
-        initComponents();
-        
-        pack();
+        setSize(1000, 800);
         setLocationRelativeTo(null);
+        initComponents();
     }
 
     private void initComponents() {
@@ -27,12 +25,13 @@ public class RoomManagementFrame extends JFrame {
         outputArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
         outputArea.setEditable(false);
         JScrollPane scrollPane = new JScrollPane(outputArea);
-        scrollPane.setBorder(BorderFactory.createTitledBorder("실행 결과 및 조회 목록"));
+        scrollPane.setBorder(BorderFactory.createTitledBorder("조회 결과"));
 
-        JTabbedPane tabbedPane = new JTabbedPane();
+        JTabbedPane tabbedPane = new JTabbedPane(); // 탭패널
        
-        tabbedPane.addTab("객실 및 예약 조회", new RoomStatusPanel(outputArea));
-        tabbedPane.addTab("예약 관리 (생성/취소)", new ReservationAdminPanel(outputArea));
+        tabbedPane.addTab("예약 관리", new ReservationPanel());
+        tabbedPane.addTab("객실 조회", new RoomStatusPanel(outputArea));
+        
         
         add(tabbedPane, BorderLayout.NORTH);
         add(scrollPane, BorderLayout.CENTER);
