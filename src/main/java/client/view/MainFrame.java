@@ -37,7 +37,7 @@ public class MainFrame extends JFrame {
         this.setLayout(new BorderLayout());
         userManagementButton = new JButton("직원/권한 관리");
         systemReportButton = new JButton("식음료 판매 관리");
-        roomTypeManagementButton = new JButton("객실 유형 관리");
+        roomTypeManagementButton = new JButton("객실 관리");
         paymentManagementButton = new JButton("결제 관리");
         reservationButton = new JButton("예약 및 조회");
         checkInOutButton = new JButton("보고서");
