@@ -44,40 +44,56 @@ public class RegisterFrame extends JFrame {
         txtId.setBounds(40, 130, 320, 35);
         formPanel.add(txtId);
 
+        // 이름 입력
+        JLabel lblName = new JLabel("Name");
+        lblName.setBounds(40, 180, 100, 20);
+        formPanel.add(lblName);
+        JTextField txtName = new JTextField();
+        txtName.setBounds(40, 200, 320, 35);
+        formPanel.add(txtName);
+
         // PW 입력
         JLabel lblPw = new JLabel("Password");
-        lblPw.setBounds(40, 180, 100, 20);
+        lblPw.setBounds(40, 250, 100, 20);
         formPanel.add(lblPw);
         JPasswordField txtPw = new JPasswordField();
-        txtPw.setBounds(40, 200, 320, 35);
+        txtPw.setBounds(40, 270, 320, 35);
         formPanel.add(txtPw);
 
         // PW 확인
         JLabel lblPwConfirm = new JLabel("Confirm Password");
-        lblPwConfirm.setBounds(40, 250, 150, 20);
+        lblPwConfirm.setBounds(40, 320, 150, 20);
         formPanel.add(lblPwConfirm);
         JPasswordField txtPwConfirm = new JPasswordField();
-        txtPwConfirm.setBounds(40, 270, 320, 35);
+        txtPwConfirm.setBounds(40, 340, 320, 35);
         formPanel.add(txtPwConfirm);
+
+        // 전화번호 입력
+        JLabel lblPhone = new JLabel("Phone");
+        lblPhone.setBounds(40, 390, 100, 20);
+        formPanel.add(lblPhone);
+        JTextField txtPhone = new JTextField();
+        txtPhone.setBounds(40, 410, 320, 35);
+        formPanel.add(txtPhone);
 
         // 가입 버튼
         JButton btnRegister = new JButton("SIGN UP");
         btnRegister.setBackground(new Color(204, 255, 204));
         btnRegister.setForeground(new Color(0, 102, 51));
         btnRegister.setFont(new Font("맑은 고딕", Font.BOLD, 14));
-        btnRegister.setBounds(40, 330, 120, 40);
+        btnRegister.setBounds(40, 460, 120, 40);
         formPanel.add(btnRegister);
 
         // 돌아가기(로그인) 라벨/버튼
         JLabel lblHaveAccount = new JLabel("I have an account");
-        lblHaveAccount.setBounds(40, 390, 150, 30);
+        lblHaveAccount.setBounds(40, 520, 150, 30);
         formPanel.add(lblHaveAccount);
 
         JButton btnBack = new JButton("Login");
         btnBack.setForeground(new Color(255, 51, 51));
         btnBack.setBorderPainted(false);
         btnBack.setContentAreaFilled(false);
-        btnBack.setBounds(150, 390, 80, 30);
+        btnBack.setBounds(180, 520, 80, 30);
         formPanel.add(btnBack);
 
         bgPanel.add(formPanel);
@@ -92,11 +108,13 @@ public class RegisterFrame extends JFrame {
         // [가입하기 버튼]
         btnRegister.addActionListener(e -> {
             String id = txtId.getText().trim();
+            String name = txtName.getText().trim();
             String pw = new String(txtPw.getPassword()).trim();
             String pw2 = new String(txtPwConfirm.getPassword()).trim();
+            String phone = txtPhone.getText().trim();
 
             // 1. 유효성 검사
-            if(id.isEmpty() || pw.isEmpty()) {
+            if(id.isEmpty() || name.isEmpty() || pw.isEmpty() || phone.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "모든 정보를 입력해주세요.");
                 return;
             }
@@ -106,8 +124,8 @@ public class RegisterFrame extends JFrame {
             }
 
             // 2. 서버 전송 (기본 권한: Customer)
-            // 프로토콜: "ADD_USER:아이디:비번:권한"
-            String request = String.format("ADD_USER:%s:%s:%s", id, pw, "Customer");
+            // 프로토콜: "ADD_USER:아이디:이름:비번:권한:전화번호"
+            String request = String.format("ADD_USER:%s:%s:%s:%s:%s", id, name, pw, "Customer", phone);
             String response = NetworkService.getInstance().sendRequest(request);
 
             if("ADD_SUCCESS".equals(response)) {

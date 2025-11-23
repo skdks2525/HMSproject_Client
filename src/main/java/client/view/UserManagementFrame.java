@@ -24,19 +24,19 @@ public class UserManagementFrame extends JFrame {
     private JTextArea outputArea; // 로그 출력용
 
     // 입력 필드
-    private JTextField txtId, txtPw;
+    private JTextField txtId, txtName, txtPw, txtPhone;
     private JComboBox<String> cmbRole;
 
     public UserManagementFrame() {
         setTitle("직원 및 권한 관리 시스템");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); // 이 창만 닫힘
+        setSize(1000, 700); // 창 크기 고정
         
         initComponents();
         
         // 창이 열리면 자동으로 목록을 불러옴
         loadUserList();
         
-        pack();
         setLocationRelativeTo(null);
     }
 
@@ -49,7 +49,7 @@ public class UserManagementFrame extends JFrame {
         JPanel listPanel = new JPanel(new BorderLayout());
         listPanel.setBorder(BorderFactory.createTitledBorder("사용자 목록 (서버 데이터)"));
         
-        String[] columns = {"아이디", "권한"}; // 비밀번호는 보안상 보여주지 않음
+        String[] columns = {"아이디", "이름", "비밀번호", "권한", "전화번호"}; // 모든 정보 표시
         tableModel = new DefaultTableModel(columns, 0) {
             @Override // 테이블 수정 불가 설정
             public boolean isCellEditable(int row, int column) { return false; }
@@ -76,8 +76,17 @@ public class UserManagementFrame extends JFrame {
         outputArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
         outputArea.setEditable(false);
         JScrollPane logScroll = new JScrollPane(outputArea);
-        logScroll.setBorder(BorderFactory.createTitledBorder("작업 로그"));
-        bottomPanel.add(logScroll, BorderLayout.CENTER);
+        
+        // 로그 패널에 클리어 버튼 추가
+        JPanel logPanel = new JPanel(new BorderLayout());
+        logPanel.setBorder(BorderFactory.createTitledBorder("작업 로그"));
+        logPanel.add(logScroll, BorderLayout.CENTER);
+        
+        JButton btnClearLog = new JButton("로그 지우기");
+        btnClearLog.addActionListener(e -> outputArea.setText(""));
+        logPanel.add(btnClearLog, BorderLayout.SOUTH);
+        
+        bottomPanel.add(logPanel, BorderLayout.CENTER);
 
         add(bottomPanel, BorderLayout.SOUTH);
     }
@@ -86,13 +95,17 @@ public class UserManagementFrame extends JFrame {
      * 관리(추가/삭제) 기능을 위한 패널 생성
      */
     private JPanel createManagementPanel() {
-        JPanel panel = new JPanel(new GridLayout(4, 2, 5, 5));
-        panel.setBorder(BorderFactory.createTitledBorder("직원 추가 / 삭제"));
+        JPanel panel = new JPanel(new GridLayout(6, 2, 5, 5));
+        panel.setBorder(BorderFactory.createTitledBorder("직원 추가 / 삭제 / 수정"));
 
         // 입력 필드
         panel.add(new JLabel("아이디:"));
         txtId = new JTextField(10);
         panel.add(txtId);
+
+        panel.add(new JLabel("이름:"));
+        txtName = new JTextField(10);
+        panel.add(txtName);
 
         panel.add(new JLabel("비밀번호:"));
         txtPw = new JTextField(10);
@@ -103,16 +116,23 @@ public class UserManagementFrame extends JFrame {
         cmbRole = new JComboBox<>(roles);
         panel.add(cmbRole);
 
+        panel.add(new JLabel("전화번호:"));
+        txtPhone = new JTextField(10);
+        panel.add(txtPhone);
+
         // 버튼 패널
-        JPanel btnPanel = new JPanel(new GridLayout(1, 2, 5, 0));
+        JPanel btnPanel = new JPanel(new GridLayout(1, 3, 5, 0));
         JButton btnAdd = new JButton("추가");
         JButton btnDelete = new JButton("삭제");
+        JButton btnModify = new JButton("수정");
         
-        btnAdd.addActionListener(this::handleAddUser);
-        btnDelete.addActionListener(this::handleDeleteUser);
+        btnAdd.addActionListener(e -> handleAddUserWithAuth());
+        btnDelete.addActionListener(e -> handleDeleteUserWithAuth());
+        btnModify.addActionListener(e -> handleModifyUserWithAuth());
         
         btnPanel.add(btnAdd);
         btnPanel.add(btnDelete);
+        btnPanel.add(btnModify);
         
         // 마지막 행에 버튼 배치 (Grid Layout 특성상 컴포넌트로 추가)
         panel.add(new JLabel("작업:")); 
@@ -134,7 +154,7 @@ public class UserManagementFrame extends JFrame {
         // 1. 서버 요청
         String response = NetworkService.getInstance().sendRequest("GET_USERS");
 
-        // 2. 응답 처리 (프로토콜: "USER_LIST:id,role/id,role/...")
+        // 2. 응답 처리 (프로토콜: "USER_LIST:id,password,role,phone,name/...")
         if (response != null && response.startsWith("USER_LIST:")) {
             tableModel.setRowCount(0); // 기존 목록 초기화
             
@@ -142,9 +162,11 @@ public class UserManagementFrame extends JFrame {
             if (!data.isEmpty()) {
                 String[] users = data.split("/");
                 for (String userStr : users) {
-                    String[] info = userStr.split(","); // info[0]=id, info[1]=role
-                    if (info.length >= 2) {
-                        tableModel.addRow(new Object[]{info[0], info[1]});
+                    String[] info = userStr.split(","); // info[0]=id, info[1]=password, info[2]=role, info[3]=phone, info[4]=name
+                    if (info.length >= 5) {
+                        tableModel.addRow(new Object[]{info[0], info[4], info[1], info[2], info[3]}); // ID, Name, Password, Role, Phone 순서로 표시
+                    } else if (info.length >= 3) { // 기존 형식 호환성
+                        tableModel.addRow(new Object[]{info[0], "", "", info[1], info[2]});
                     }
                 }
                 displayLog("목록 갱신 완료 (" + users.length + "명)");
@@ -239,5 +261,82 @@ public class UserManagementFrame extends JFrame {
             outputArea.append("[ERROR] " + message + "\n");
             JOptionPane.showMessageDialog(this, message, "오류", JOptionPane.ERROR_MESSAGE);
         });
+    }
+
+    // =======================================================
+    // 🔐 인증 코드 처리 + 확장된 사용자 작업
+    // =======================================================
+    private String getAuthCodeEnv() {
+        String code = System.getenv("ADMIN_AUTH_CODE");
+        return (code == null || code.isEmpty()) ? "0000" : code.trim();
+    }
+
+    private boolean verifyAuthCode() {
+        String expected = getAuthCodeEnv();
+        String input = JOptionPane.showInputDialog(this, "인증 코드를 입력하세요", "인증", JOptionPane.PLAIN_MESSAGE);
+        if(input == null) return false; // 취소
+        if(!expected.equals(input.trim())) {
+            displayError("인증 코드가 올바르지 않습니다.");
+            return false;
+        }
+        return true;
+    }
+
+    private void handleAddUserWithAuth() {
+        if(!verifyAuthCode()) return;
+        String id = txtId.getText().trim();
+        String name = txtName.getText().trim();
+        String pw = txtPw.getText().trim();
+        String role = (String) cmbRole.getSelectedItem();
+        String phone = txtPhone.getText().trim();
+        if(id.isEmpty() || name.isEmpty() || pw.isEmpty() || phone.isEmpty()) {
+            displayError("아이디/이름/비밀번호/전화번호를 입력하세요.");
+            return;
+        }
+        String request = String.format("ADD_USER:%s:%s:%s:%s:%s", id, name, pw, role, phone);
+        String response = NetworkService.getInstance().sendRequest(request);
+        if("ADD_SUCCESS".equals(response)) {
+            displayLog("추가 성공: " + id);
+            loadUserList();
+            clearInputFields();
+        } else {
+            displayError("추가 실패: " + response);
+        }
+    }
+
+    private void handleDeleteUserWithAuth() {
+        if(!verifyAuthCode()) return;
+        handleDeleteUser(null); // 기존 로직 재사용
+    }
+
+    private void handleModifyUserWithAuth() {
+        if(!verifyAuthCode()) return;
+        String id = txtId.getText().trim();
+        String name = txtName.getText().trim();
+        String pw = txtPw.getText().trim();
+        String role = (String) cmbRole.getSelectedItem();
+        String phone = txtPhone.getText().trim();
+        if(id.isEmpty() || name.isEmpty() || pw.isEmpty() || phone.isEmpty()) {
+            displayError("아이디/이름/비밀번호/전화번호를 입력하세요.");
+            return;
+        }
+        String request = String.format("MODIFY_USER:%s:%s:%s:%s:%s", id, name, pw, role, phone);
+        String response = NetworkService.getInstance().sendRequest(request);
+        if("MODIFY_SUCCESS".equals(response)) {
+            displayLog("수정 성공: " + id);
+            loadUserList();
+            clearInputFields();
+        } else {
+            displayError("수정 실패: " + response);
+        }
+    }
+
+    /** 입력 필드 초기화 */
+    private void clearInputFields() {
+        txtId.setText("");
+        txtName.setText("");
+        txtPw.setText("");
+        txtPhone.setText("");
+        cmbRole.setSelectedIndex(0);
     }
 }
