@@ -28,6 +28,7 @@ public class MainFrame extends JFrame {
     private final JButton checkInOutButton;
     private final JPanel menuPanel;
     private final JButton logoutButton;
+    private final JButton menukioskButton;
 
 
     public MainFrame(String userId, String role) {
@@ -37,6 +38,7 @@ public class MainFrame extends JFrame {
         this.setLayout(new BorderLayout());
         userManagementButton = new JButton("직원/권한 관리");
         systemReportButton = new JButton("식음료 판매 관리");
+        menukioskButton = new JButton("식음료 구매");
         roomTypeManagementButton = new JButton("객실 관리");
         paymentManagementButton = new JButton("결제 관리");
         reservationButton = new JButton("예약 및 조회");
@@ -46,6 +48,7 @@ public class MainFrame extends JFrame {
         
         menuPanel.add(userManagementButton);
         menuPanel.add(systemReportButton);
+        menuPanel.add(menukioskButton);
         menuPanel.add(roomTypeManagementButton);
         menuPanel.add(reservationButton);
         menuPanel.add(checkInOutButton);
@@ -59,6 +62,8 @@ public class MainFrame extends JFrame {
         applyAuthorization(role);
         reservationButton.addActionListener(this::handleRoomManagementClick); //예약 조회 클릭        
         userManagementButton.addActionListener(this::handleUserManagementClick); //직원 관리 클릭
+        systemReportButton.addActionListener(this::handleMenuManagementClick); //식음료 관리 관리 클릭
+        menukioskButton.addActionListener(this::handleMenuKioskClick); //식음료 관리 관리 클릭
         
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         
@@ -96,6 +101,18 @@ public class MainFrame extends JFrame {
     private void handleRoomManagementClick(ActionEvent e) {
         System.out.println("예약 조회 화면");
         new RoomManagementFrame(userId).setVisible(true);
+    }
+    
+    private void handleMenuManagementClick(ActionEvent e) {
+        System.out.println("[클라이언트] 식음료 관리 화면");
+        
+        new MenuManagementFrame().setVisible(true);
+    }
+    
+    private void handleMenuKioskClick(ActionEvent e) {
+        System.out.println("[클라이언트] 식음료 키오스크 화면");
+        
+        new MenuKioskModernFrame().setVisible(true);
     }
     
     private void handleLogout(ActionEvent e) {
