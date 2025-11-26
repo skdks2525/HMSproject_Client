@@ -64,6 +64,17 @@ public class MainFrame extends JFrame {
         userManagementButton.addActionListener(this::handleUserManagementClick); //직원 관리 클릭
         systemReportButton.addActionListener(this::handleMenuManagementClick); //식음료 관리 관리 클릭
         menukioskButton.addActionListener(this::handleMenuKioskClick); //식음료 관리 관리 클릭
+        // '보고서' 버튼 클릭 시 리포트 창 오픈 (객실 매출 기본 탭)
+        checkInOutButton.addActionListener(e -> {
+            JTabbedPane tabs = new JTabbedPane();
+            tabs.addTab("객실 매출 보고서", new RoomSalesReportPanel());
+            JFrame f = new JFrame("보고서");
+            f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            f.setSize(900,600);
+            f.setLocationRelativeTo(this);
+            f.add(tabs);
+            f.setVisible(true);
+        });
         
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         
