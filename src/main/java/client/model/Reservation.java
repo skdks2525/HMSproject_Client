@@ -9,17 +9,17 @@ package client.model;
  * @author user
  */
 public class Reservation {
-    private String reservationId;
+     private String reservationId;
     private String roomNumber;
     private String guestName;
     private String checkInDate;
     private String checkOutDate;
     private int guestNum;
     private String phoneNumber;
-    private String paymentInfo;
+    private String reservationStatus;
     private String createdAt;
 
-    public Reservation(String reservationId, String roomNumber, String guestName, String checkInDate, String checkOutDate, int guestNum, String phoneNumber, String createdAt) {
+    public Reservation(String reservationId, String roomNumber, String guestName, String checkInDate, String checkOutDate, int guestNum, String phoneNumber, String reservationStatus, String createdAt) {
         this.reservationId = reservationId;
         this.roomNumber = roomNumber;
         this.guestName = guestName;
@@ -27,7 +27,7 @@ public class Reservation {
         this.checkOutDate = checkOutDate;
         this.guestNum = guestNum;
         this.phoneNumber = phoneNumber;
-        this.paymentInfo = (paymentInfo == null) ? "Unpaid" : paymentInfo;
+        this.reservationStatus = (reservationStatus == null) ? "Unpaid" : reservationStatus;
         this.createdAt = createdAt;
     }
 
@@ -38,13 +38,13 @@ public class Reservation {
     public String getCheckOutDate() { return checkOutDate; }
     public int getGuestNum() { return guestNum; }
     public String getPhoneNumber() { return phoneNumber; }
-    public String getPaymentInfo() { return paymentInfo; }
+    public String reservationStatus() { return reservationStatus; }
     public String getCreatedAt() { return createdAt; }
 
     //setter
-    public void setPaymentInfo(String paymentInfo) { this.paymentInfo = paymentInfo; }
+    public void setReservationStatus(String reservationStatus) { this.reservationStatus = reservationStatus; }
     @Override
     public String toString() {
-        return String.format("%s,%s,%s,%s,%s,%d,%s, %s, &s", reservationId, roomNumber, guestName, checkInDate, checkOutDate, guestNum, phoneNumber, paymentInfo, createdAt);
+        return String.format("%s,%s,%s,%s,%s,%d,%s, %s, %s", reservationId, roomNumber, guestName, checkInDate, checkOutDate, guestNum, phoneNumber, reservationStatus, createdAt);
     }
 }
