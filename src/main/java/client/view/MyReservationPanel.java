@@ -90,10 +90,11 @@ public class MyReservationPanel extends JPanel {
  
                     String[] info = item.split(","); 
                     
-                    if (info.length >= 8) { 
+                    if (info.length >= 9) { 
                         JPanel card = createReservationCard(
                             info[0].trim(), info[1].trim(), info[2].trim(), info[3].trim(),
-                            info[4].trim(), info[5].trim(), info[6].trim(), info[7].trim());
+                            info[4].trim(), info[5].trim(), info[6].trim(), info[7].trim(),
+                            info[8].trim());
                         listPanel.add(card);
                         listPanel.add(Box.createRigidArea(new Dimension(0, 10))); // 간격 추가
                     }
@@ -123,7 +124,7 @@ public class MyReservationPanel extends JPanel {
     }
 
     // 예약 카드 UI 생성
-    private JPanel createReservationCard(String resId, String roomNum, String name, String inDate, String outDate, String guests, String phone, String status) {
+    private JPanel createReservationCard(String resId, String roomNum, String name, String inDate, String outDate, String guests, String phone, String status, String paymentInfo) {
         JPanel card = new JPanel(new BorderLayout(15, 15));
         card.setBackground(Color.WHITE);
         card.setBorder(BorderFactory.createCompoundBorder(
@@ -155,7 +156,7 @@ public class MyReservationPanel extends JPanel {
                 lblName.setForeground(Color.RED);
                 break;
                 
-            case "Comfirmed":     
+            case "Confirmed":     
                 lblName.setText(name + "님 예약 (예약 확정)");
                 lblName.setForeground(new Color(0, 153, 51)); // 진한 초록
                 break;
@@ -201,8 +202,8 @@ public class MyReservationPanel extends JPanel {
             btnPay.addActionListener(e -> requestPayment(resId));
             btnPanel.add(btnPay);
         } else {
-            // 결제 완료 시 '완료' 표시
-            JLabel lblDone = new JLabel("결제 완료", SwingConstants.CENTER);
+            // 결제수단 등록 완료 시 '완료' 표시
+            JLabel lblDone = new JLabel("등록 완료", SwingConstants.CENTER);
             lblDone.setFont(new Font("맑은 고딕", Font.BOLD, 12));
             lblDone.setForeground(new Color(0, 153, 51));
             btnPanel.add(lblDone);
@@ -279,6 +280,7 @@ public class MyReservationPanel extends JPanel {
         String request = String.format("UPDATE_PAYMENT:%s:%s:%s:%s:%s:%s", 
                 resId, method, cardNum, cvc, expiry, pw);
         
+        System.out.println("[Client] 결제 요청 전송: " + request);
         String response = NetworkService.getInstance().sendRequest(request);
         
         if ("PAYMENT_SUCCESS".equals(response)) {
