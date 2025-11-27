@@ -123,7 +123,7 @@ public class MyReservationPanel extends JPanel {
     }
 
     // 예약 카드 UI 생성
-    private JPanel createReservationCard(String resId, String roomNum, String name, String inDate, String outDate, String guests, String phone, String payment) {
+    private JPanel createReservationCard(String resId, String roomNum, String name, String inDate, String outDate, String guests, String phone, String status) {
         JPanel card = new JPanel(new BorderLayout(15, 15));
         card.setBackground(Color.WHITE);
         card.setBorder(BorderFactory.createCompoundBorder(
@@ -148,15 +148,30 @@ public class MyReservationPanel extends JPanel {
 
         JLabel lblName = new JLabel();
         lblName.setFont(new Font("맑은 고딕", Font.BOLD, 16));
-
-        if ("Unpaid".equals(payment)) {
-            // 미결제 상태 -> 빨간색 경고
-            lblName.setText(name + "님 예약 (미결제 - 18시 마감)");
-            lblName.setForeground(Color.RED);
-        } else {
-            // 결제 완료 상태 -> 초록색 확정 문구
-            lblName.setText(name + "님 예약 (예약 확정)");
-            lblName.setForeground(new Color(0, 153, 51)); // 진한 초록
+        
+        switch(status){
+            case "Unpaid":           
+                lblName.setText(name + "님 예약 (미결제 - 18시 마감)");
+                lblName.setForeground(Color.RED);
+                break;
+                
+            case "Comfirmed":     
+                lblName.setText(name + "님 예약 (예약 확정)");
+                lblName.setForeground(new Color(0, 153, 51)); // 진한 초록
+                break;
+                
+            case "CheckedIn":
+                lblName.setText(name + "님 (투숙 중)");
+                lblName.setForeground(Color.BLUE);
+                break;
+                
+            case "CheckedOut":
+                lblName.setText(name + "님 (체크아웃)");
+                lblName.setForeground(Color.GRAY);
+                break;
+                
+            default:
+                lblName.setText(name + "님 예약 (" + status + ")");
         }
         
         JLabel lblDate = new JLabel(inDate + " ~ " + outDate);
@@ -177,7 +192,7 @@ public class MyReservationPanel extends JPanel {
         btnPanel.setOpaque(false);
 
         // 결제 버튼
-        if ("Unpaid".equals(payment)) {
+        if ("Unpaid".equals(status)) {
             JButton btnPay = new JButton("결제수단 등록");
             btnPay.setBackground(new Color(100, 150, 255)); // 파란색
             btnPay.setForeground(Color.WHITE);
@@ -207,23 +222,70 @@ public class MyReservationPanel extends JPanel {
         return card;
     }
 
-    // 결제 요청 기능
     private void requestPayment(String resId) {
-        String cardInfo = JOptionPane.showInputDialog(this, 
-                "신용카드 번호를 입력해주세요 (예: 0000-0000-0000-0000)", 
-                "결제수단 등록", JOptionPane.QUESTION_MESSAGE);
+        Object[] options = {"신용카드", "계좌이체", "무통장입금"};
+        int choice = JOptionPane.showOptionDialog(this,
+                "결제 수단을 선택해주세요.",
+                "결제 수단 선택",
+                JOptionPane.YES_NO_CANCEL_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                options,
+                options[0]);
+
+        if (choice == -1) return;
+
+        String method = (String) options[choice];
         
-        if (cardInfo != null && !cardInfo.trim().isEmpty()) {
-            // 서버 프로토콜: UPDATE_PAYMENT:예약ID:결제정보
-            String request = "UPDATE_PAYMENT:" + resId + ":" + cardInfo;
-            String response = NetworkService.getInstance().sendRequest(request);
+        // 서버로 보낼 데이터 변수들
+        String cardNum = "0", cvc = "0", expiry = "0", pw = "0";
+
+        if ("신용카드".equals(method)) {
+            // 여긴 신용카드 정보입력 패널
+            JPanel panel = new JPanel(new GridLayout(4, 2, 5, 5));
+            JTextField txtNum = new JTextField();
+            JTextField txtCVC = new JTextField();
+            JTextField txtExpiry = new JTextField("MM/YY");
+            JPasswordField txtPw = new JPasswordField();
+
+            panel.add(new JLabel("카드 번호:")); panel.add(txtNum);
+            panel.add(new JLabel("CVC (3자리):")); panel.add(txtCVC);
+            panel.add(new JLabel("유효기간:")); panel.add(txtExpiry);
+            panel.add(new JLabel("비번 (앞2자리):")); panel.add(txtPw);
+
+            int result = JOptionPane.showConfirmDialog(this, panel, "신용카드 정보 입력", JOptionPane.OK_CANCEL_OPTION);
+            if (result != JOptionPane.OK_OPTION) return;
+
+            cardNum = txtNum.getText().trim();
+            cvc = txtCVC.getText().trim();
+            expiry = txtExpiry.getText().trim();
+            pw = new String(txtPw.getPassword()).trim();
             
-            if ("PAYMENT_SUCCESS".equals(response)) {
-                JOptionPane.showMessageDialog(this, "결제 정보가 등록되었습니다!");
-                loadMyReservations(); // 화면 새로고침 (상태 변경 확인)
-            } else {
-                JOptionPane.showMessageDialog(this, "등록 실패: " + response, "오류", JOptionPane.ERROR_MESSAGE);
+            if (cardNum.isEmpty() || cvc.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "필수 정보를 입력해주세요.");
+                return;
             }
+            
+        } else {
+            // [계좌이체 / 무통장입금] 입금자명만 입력
+            String sender = JOptionPane.showInputDialog(this, "입금자명을 입력해주세요:", method, JOptionPane.QUESTION_MESSAGE);
+            if (sender == null || sender.trim().isEmpty()) return;
+            
+            cardNum = sender; // 카드번호 자리에 입금자명 저장
+            // 나머지는 "0"으로 채워서 서버 포맷 맞춤
+        }
+
+        // 서버 전송
+        String request = String.format("UPDATE_PAYMENT:%s:%s:%s:%s:%s:%s", 
+                resId, method, cardNum, cvc, expiry, pw);
+        
+        String response = NetworkService.getInstance().sendRequest(request);
+        
+        if ("PAYMENT_SUCCESS".equals(response)) {
+            JOptionPane.showMessageDialog(this, "결제가 완료되었습니다!\n(" + method + ")");
+            loadMyReservations();
+        } else {
+            JOptionPane.showMessageDialog(this, "결제 실패: " + response, "오류", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -236,7 +298,7 @@ public class MyReservationPanel extends JPanel {
             String response = NetworkService.getInstance().sendRequest("DELETE_RESERVATION:" + resId);
             if (response != null && response.startsWith("DELETE_SUCCESS")) {
                 JOptionPane.showMessageDialog(this, "취소되었습니다.");
-                loadMyReservations(); // 화면 새로고침
+                loadMyReservations();
             } else {
                 JOptionPane.showMessageDialog(this, "취소 실패: " + response, "오류", JOptionPane.ERROR_MESSAGE);
             }
