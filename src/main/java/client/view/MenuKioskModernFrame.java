@@ -3,14 +3,32 @@ import client.net.NetworkService;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
+// import java.util.List; // 불필요한 import 제거
 import java.util.ArrayList;
+import client.model.Menu;
+import client.model.Cart;
 
+
+/**
+ * 고객용 식음료 키오스크 프레임
+ * - 서버에서 판매중인 메뉴만 불러와 카드 형태로 표시
+ * - 장바구니에 메뉴 추가, 결제, 결제 후 재고 반영 등 전체 주문 프로세스 담당
+ * - 모든 서버 통신은 NetworkService를 통해 이루어짐
+ */
 public class MenuKioskModernFrame extends JFrame {
 
+    // 메뉴 카드가 표시될 패널
     private JPanel menuListPanel;
+    // 장바구니 버튼
     private JButton cartButton;
+    // 장바구니 객체(메뉴 담기/비우기/총액 계산)
+    private final Cart cart = new Cart(new ArrayList<>());
 
+    /**
+     * 프레임 생성자: UI 초기화 및 메뉴 카드 로드
+     * - 서버에서 메뉴 목록을 받아와 화면에 표시
+     * - 장바구니/결제 기능 연결
+     */
     public MenuKioskModernFrame() {
         setTitle("식음료 주문");
         setSize(900, 700);
@@ -22,7 +40,7 @@ public class MenuKioskModernFrame extends JFrame {
         add(createMenuScrollPanel(), BorderLayout.CENTER);
         add(createFooter(), BorderLayout.SOUTH);
 
-        loadMenuCards(); // 메뉴 카드 추가 실행
+        loadMenuCards(); // 메뉴 카드 동적 생성 및 표시
 
         setVisible(true);
     }
@@ -56,113 +74,158 @@ public class MenuKioskModernFrame extends JFrame {
     // ===============================
     private JPanel createFooter() {
         JPanel bottom = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
-
-        cartButton = new JButton("장바구니 보기 / 결제");
+        cartButton = new JButton("장바구니");
         cartButton.setBackground(Color.BLACK);
         cartButton.setForeground(Color.WHITE);
         cartButton.setPreferredSize(new Dimension(200, 40));
-
+        cartButton.addActionListener(e -> showCartDialog());
         bottom.add(cartButton);
         return bottom;
     }
 
     // ===============================
-    // 메뉴 카드 생성
-    // ===============================
-    private void loadMenuCards() {   
-    menuListPanel.removeAll(); // 혹시 이전 것 지우기
-    // 1. 서버 요청
-    String response = NetworkService.getInstance().sendRequest("GET_MENUS");
-
-    if (response == null || !response.startsWith("MENU_LIST:")) {
-        JOptionPane.showMessageDialog(this, "메뉴 로딩 실패!");
-        return;
+    // ...existing code...
+    /**
+     * 서버에서 판매중인 메뉴 목록을 받아와 카드 형태로 동적으로 패널에 추가
+     * - GET_MENUS 요청 후, 응답이 정상(MENU_LIST:)이 아니면 에러 메시지 출력
+     * - 각 메뉴 info: [0]=ID, [1]=이름, [2]=가격, [3]=카테고리, [4]=판매여부, [5]=재고
+     * - 판매중이 아니거나 재고가 0 이하인 메뉴는 표시하지 않음
+     * - 각 메뉴는 createMenuCard로 카드 생성 후 패널에 추가
+     */
+    private void loadMenuCards() {
+        menuListPanel.removeAll();
+        String response = NetworkService.getInstance().sendRequest("GET_MENUS");
+        if (response == null || !response.startsWith("MENU_LIST:")) {
+            JOptionPane.showMessageDialog(this, "메뉴 로딩 실패!");
+            return;
+        }
+        String data = response.substring("MENU_LIST:".length());
+        if (data.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "메뉴가 없습니다.");
+            return;
+        }
+        String[] menus = data.split("/");
+        for (String m : menus) {
+            String[] info = m.split(",");
+            if (info.length < 6) continue;
+            String menuid = info[0];
+            String name = info[1];
+            int price;
+            int stock;
+            try {
+                price = Integer.parseInt(info[2]);
+                stock = Integer.parseInt(info[5]);
+            } catch (NumberFormatException e) {
+                continue;
+            }
+            String category = info[3];
+            boolean isAvailable = Boolean.parseBoolean(info[4]);
+            // 판매중이 아니거나 재고가 0 이하인 메뉴는 표시하지 않음
+            if (!isAvailable || stock <= 0) continue;
+            Menu menu = new Menu(menuid, name, price, category, isAvailable, stock);
+            menuListPanel.add(createMenuCard(menu));
+            menuListPanel.add(Box.createVerticalStrut(15));
+        }
+        menuListPanel.revalidate();
+        menuListPanel.repaint();
     }
 
-    // 2. 필요한 데이터만 분리
-    String data = response.substring("MENU_LIST:".length());
-
-    if (data.isEmpty()) {
-        JOptionPane.showMessageDialog(this, "메뉴가 없습니다.");
-        return;
-    }
-
-    // 3. 메뉴 단위로 분리  (예: id,name,price,category/isAvailable)
-    String[] menus = data.split("/");
-
-    for (String m : menus) {
-        String[] info = m.split(",");
-
-        if (info.length < 5) continue;
-
-        String menuid = info[0];
-        String name = info[1];
-        int price = Integer.parseInt(info[2]);
-        String category = info[3];
-        boolean isAvailable = Boolean.parseBoolean(info[4]);
-
-        if (!isAvailable) continue;  // 판매 불가 메뉴는 표시 안 함
-
-        // 4. 카드 UI 추가
-        menuListPanel.add(createMenuCard(menuid, name, price, category));
-        menuListPanel.add(Box.createVerticalStrut(15));
-    }
-    menuListPanel.revalidate();
-    menuListPanel.repaint();
-}
-
     // ===============================
-    // 개별 메뉴 카드 UI 구성
-    // ===============================
-    private JPanel createMenuCard(String menuid, String name, int price, String category) {
+        // ===============================
+    // 메뉴 객체 기반 카드 생성
+    /**
+     * 단일 메뉴 정보를 카드 형태의 JPanel로 생성
+     * - 메뉴명, 가격, 재고 표시
+     * - '담기' 버튼 클릭 시 장바구니에 해당 메뉴 추가
+     * - 재고 0이거나 판매중지 메뉴는 버튼 비활성화
+     * @param menu 메뉴 정보 객체
+     * @return 메뉴 카드 패널
+     */
+    private JPanel createMenuCard(Menu menu) {
         JPanel card = new JPanel();
         card.setLayout(new BorderLayout(15, 0));
         card.setPreferredSize(new Dimension(820, 120));
         card.setBackground(new Color(245, 245, 245));
         card.setBorder(BorderFactory.createLineBorder(new Color(220, 220, 220)));
 
-        // 왼쪽 이미지 박스
+        // 메뉴 이미지(샘플)
         JPanel imgBox = new JPanel();
         imgBox.setPreferredSize(new Dimension(120, 100));
         imgBox.setBackground(new Color(200, 200, 200));
         imgBox.add(new JLabel("IMG"));
         card.add(imgBox, BorderLayout.WEST);
 
-        // 중앙 텍스트
+        // 메뉴명, 가격, 재고 표시
         JPanel center = new JPanel();
         center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
-        center.setOpaque(false);
 
-        JLabel nameLabel = new JLabel(name);
+        JLabel nameLabel = new JLabel(menu.getName());
         nameLabel.setFont(new Font("맑은 고딕", Font.BOLD, 20));
 
-        JLabel priceLabel = new JLabel(price + "원");
+        JLabel priceLabel = new JLabel(menu.getPrice() + "원");
         priceLabel.setFont(new Font("맑은 고딕", Font.BOLD, 18));
-        priceLabel.setForeground(new Color(252, 136, 3)); // 주황색
+        priceLabel.setForeground(new Color(252, 136, 3));
 
-        JLabel categoryLabel = new JLabel(category);
-        categoryLabel.setFont(new Font("맑은 고딕", Font.PLAIN, 14));
-        categoryLabel.setForeground(Color.GRAY);
+        JLabel stockLabel = new JLabel("재고: " + menu.getStock());
+        stockLabel.setFont(new Font("맑은 고딕", Font.PLAIN, 14));
 
-        center.add(Box.createVerticalStrut(10));
         center.add(nameLabel);
         center.add(priceLabel);
-        center.add(categoryLabel);
-
+        center.add(stockLabel);
         card.add(center, BorderLayout.CENTER);
 
-        // 오른쪽 “담기” 버튼
-        JButton addBtn = new JButton("담기");
-        addBtn.setPreferredSize(new Dimension(80, 40));
-        addBtn.setBackground(new Color(30, 144, 255));
-        addBtn.setForeground(Color.WHITE);
-
-        JPanel right = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 40));
-        right.setOpaque(false);
-        right.add(addBtn);
-
-        card.add(right, BorderLayout.EAST);
+        // 장바구니 담기 버튼 (재고 0/판매중지면 비활성화)
+        JButton addButton = new JButton("담기");
+        addButton.setEnabled(menu.getStock() > 0 && menu.getIsAvailable());
+        addButton.addActionListener(e -> {
+            cart.addItem(menu);
+            JOptionPane.showMessageDialog(this, menu.getName() + "를 장바구니에 담았습니다.");
+        });
+        JPanel rightPanel = new JPanel();
+        rightPanel.setOpaque(false);
+        rightPanel.add(addButton);
+        card.add(rightPanel, BorderLayout.EAST);
 
         return card;
     }
+
+    // 장바구니/결제 화면
+    /**
+     * 장바구니/결제 다이얼로그 표시 및 결제 처리
+     * - 장바구니 내역, 총액 표시
+     * - 결제 버튼 클릭 시 카드번호 입력받고 서버에 ORDER_MENU 프로토콜로 결제 요청
+     * - 결제 성공 시 장바구니 비우고, 메뉴 재고 갱신
+     */
+    private void showCartDialog() {
+        JDialog dialog = new JDialog(this, "장바구니", true);
+        dialog.setSize(400, 400);
+        dialog.setLocationRelativeTo(this);
+        JPanel panel = new JPanel(new BorderLayout());
+        DefaultListModel<String> listModel = new DefaultListModel<>();
+        for (Menu m : cart.getItems()) {
+            listModel.addElement(m.getName() + " - " + m.getPrice() + "원");
+        }
+        JList<String> list = new JList<>(listModel);
+        panel.add(new JScrollPane(list), BorderLayout.CENTER);
+        JLabel totalLabel = new JLabel("총액: " + cart.getTotalPrice() + "원");
+        panel.add(totalLabel, BorderLayout.NORTH);
+
+        JButton payButton = new JButton("결제");
+        payButton.addActionListener(e -> {
+            String cardNum = JOptionPane.showInputDialog(dialog, "카드번호를 입력하세요");
+            if (cardNum == null || cardNum.trim().isEmpty()) return;
+            // 서버에 결제 요청 (ORDER_MENU:고객명:총액:결제상태:메뉴목록)
+            String req = String.format("ORDER_MENU:%s:%d:%s:%s", System.getProperty("user.name"), cart.getTotalPrice(), "Paid", cart.getFoodNamesString());
+            String resp = NetworkService.getInstance().sendRequest(req);
+            JOptionPane.showMessageDialog(dialog, resp);
+            cart.clear();
+            dialog.dispose();
+            loadMenuCards(); // 결제 후 재고 반영
+        });
+        panel.add(payButton, BorderLayout.SOUTH);
+
+        dialog.add(panel);
+        dialog.setVisible(true);
+    }
+
 }

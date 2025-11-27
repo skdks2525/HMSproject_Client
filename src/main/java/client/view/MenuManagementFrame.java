@@ -27,8 +27,9 @@ public class MenuManagementFrame extends JFrame {
     private final JTextField priceField = new JTextField(15);
     
     // 테이블 헤더 정의
-    private final String[] columnNames = {"ID", "이름", "가격", "종류", "판매 여부"};
+        private final JTextField stockField = new JTextField(15); // 추가된 재고 필드
     
+        private final String[] columnNames = {"ID", "이름", "가격", "종류", "판매 여부", "재고"};
     public MenuManagementFrame() {
         setTitle("식음료 메뉴 관리");
         
@@ -67,19 +68,21 @@ public class MenuManagementFrame extends JFrame {
     
     //  UI 디자인 및 컴포넌트 배치
     private void initializeUI() {
+            // [UI 구조] 입력 패널을 3행 2열로 재배치하여 ID/이름, 가격/종류, 판매여부/재고를 각각 한 줄에 배치
+            // [UI 개선] 판매여부, 재고 필드가 명확하게 구분되어 입력/수정이 쉬움
         this.setLayout(new BorderLayout(10, 10));
-        
+
         // 테이블 패널 (중앙)
         JScrollPane tableScrollPane = new JScrollPane(menuTable);
         this.add(tableScrollPane, BorderLayout.CENTER);
-        
+
         // 입력 및 버튼 패널 (남쪽)
         JPanel southPanel = new JPanel(new BorderLayout(10, 10));
-        
-        // 입력 필드 패널
-        JPanel inputPanel = new JPanel(new GridLayout(3, 4, 10, 5));
+
+        // 입력 패널: 3행 2열(상단 ID/이름, 중간 가격/종류, 하단 판매여부/재고)
+        JPanel inputPanel = new JPanel(new GridLayout(3, 2, 10, 5));
         inputPanel.setBorder(BorderFactory.createTitledBorder("메뉴 정보 입력/수정"));
-        
+
         inputPanel.add(new JLabel("ID: "));
         inputPanel.add(menuIdField);
         inputPanel.add(new JLabel("이름: "));
@@ -87,35 +90,48 @@ public class MenuManagementFrame extends JFrame {
         inputPanel.add(new JLabel("가격: "));
         inputPanel.add(priceField);
         inputPanel.add(new JLabel("종류: "));
-        String [] categorys = {"메인음식", "디저트", "음료", "미분류"};
+        String[] categorys = {"메인음식", "디저트", "음료", "미분류"};
         cmbCategory = new JComboBox<>(categorys);
         inputPanel.add(cmbCategory);
         inputPanel.add(new JLabel("판매여부: "));
-        String [] isavailable = {"판매중", "판매중지"};
+        String[] isavailable = {"판매중", "판매중지"};
         cmbIsAvailable = new JComboBox<>(isavailable);
         inputPanel.add(cmbIsAvailable);
-        
-        // 마지막 빈칸들 채우기 (GridLayout은 칸을 정확히 맞춰야 함)
-        inputPanel.add(new JLabel(""));
-        inputPanel.add(new JLabel(""));
+        inputPanel.add(new JLabel("재고: "));
+        inputPanel.add(stockField);
+
         southPanel.add(inputPanel, BorderLayout.CENTER);
-        
+
         // 버튼 패널
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        
         buttonPanel.add(addButton);
         buttonPanel.add(updateButton);
         buttonPanel.add(deleteButton);
         buttonPanel.add(clearButton);
-        
         southPanel.add(buttonPanel, BorderLayout.SOUTH);
-        
+
         this.add(southPanel, BorderLayout.SOUTH);
     }
     
     // 이벤트 처리 및 Controller 연동
     
     private void setupEventListeners() {
+                        // [이벤트 처리 상세 설명]
+                        // - 판매여부 콤보박스(cmbIsAvailable)에서 '판매중지' 선택 시 재고 입력란을 0으로 만들고 비활성화
+                        // - '판매중' 선택 시 재고 입력란 활성화
+                        // - 등록/수정/삭제/지우기 버튼에 각각 이벤트 리스너 연결
+                        // - 테이블 행 선택 시 입력란 자동 채움(loadFieldsFromSelectedRow)
+                    // [이벤트] 판매여부 콤보박스가 '판매중지'로 바뀌면 재고 입력란을 0으로 만들고 비활성화, '판매중'이면 활성화
+                // 판매여부 콤보박스 변경 시 재고 자동 처리
+                cmbIsAvailable.addActionListener(e -> {
+                    String sel = (String) cmbIsAvailable.getSelectedItem();
+                    if (sel != null && sel.equals("판매중지")) {
+                        stockField.setText("0");
+                        stockField.setEnabled(false);
+                    } else {
+                        stockField.setEnabled(true);
+                    }
+                });
         // 등록 버튼 클릭
         addButton.addActionListener(e -> handleAddMenu());
         
@@ -135,26 +151,42 @@ public class MenuManagementFrame extends JFrame {
     
     // 메뉴 목록 호출 (참고: UserManagementFrame.java)
     private void loadMenuData() {
+                // [서버 데이터 파싱 및 테이블 반영 상세 설명]
+                // - 서버로부터 "GET_MENUS" 요청 결과를 받아 각 메뉴 정보를 테이블에 추가
+                // - info[0]=ID, info[1]=이름, info[2]=가격, info[3]=종류, info[4]=판매여부, info[5]=재고
+                // - 판매중지 메뉴는 재고를 0으로 표시
+                // - 테이블에는 모든 메뉴(판매중/중지)와 재고가 표시됨
+            // [서버 연동] GET_MENUS 요청 결과를 파싱하여 테이블에 표시
+            // [로직] 판매중지 메뉴는 재고를 0으로 표시, 테이블에는 판매여부/재고 모두 표시
+        tableModel.setRowCount(0);
         String response = NetworkService.getInstance().sendRequest("GET_MENUS");
-        
-        if (response != null && response.startsWith("MENU_LIST:")) {
-            tableModel.setRowCount(0); // 목록 초기화
-           
-            String data = response.substring("MENU_LIST:".length());
-            if (!data.isEmpty()) {
-                String[] menus = data.split("/");
-                for (String menuStr : menus) {
-                    String[] info = menuStr.split(",");
-                    if (info.length >= 5) {
-                        String status = info[4].equals("true") ? "판매중" : "판매중지"; // 관리 ui에서 판매 여부를 판매중, 판매중지로 표시 (없으면 true/false로 표기됨)
-                        tableModel.addRow(new Object[] {info[0], info[1], info[2], info[3], status});
-                    }
-                }
-                JOptionPane.showMessageDialog(this, "목록 갱신 완료 (" + menus.length + "개)");
+        if (response == null || !response.startsWith("MENU_LIST:")) {
+            JOptionPane.showMessageDialog(this, "메뉴 목록을 불러오지 못했습니다.");
+            return;
+        }
+        String data = response.substring("MENU_LIST:".length());
+        if (data.isEmpty()) return;
+        String[] menus = data.split("/");
+        for (String m : menus) {
+            String[] info = m.split(",");
+            if (info.length < 6) continue;
+            String menuid = info[0];
+            String name = info[1];
+            int price;
+            int stock;
+            try {
+                price = Integer.parseInt(info[2]);
+                stock = Integer.parseInt(info[5]);
+            } catch (NumberFormatException e) {
+                continue;
             }
-            else {
-                JOptionPane.showMessageDialog(this, "등록된 메뉴가 존재하지 않습니다.", "호출 오류", JOptionPane.ERROR_MESSAGE);
+            String category = info[3];
+            boolean isAvailable = Boolean.parseBoolean(info[4]);
+            // 판매중 메뉴만 표시, 판매중지면 재고 0으로
+            if (!isAvailable) {
+                stock = 0;
             }
+            tableModel.addRow(new Object[]{menuid, name, price, category, isAvailable ? "판매중" : "판매중지", stock});
         }
         
         
@@ -173,29 +205,37 @@ public class MenuManagementFrame extends JFrame {
     
     // 메뉴 등록 처리
     private void handleAddMenu() {
+                // [메뉴 등록 처리 상세 설명]
+                // 1. 입력값(메뉴ID, 이름, 가격, 종류, 판매여부, 재고) 검증
+                //    - 메뉴ID, 이름이 비어있으면 등록 불가
+                //    - 재고가 숫자가 아니면 등록 불가
+                // 2. 서버로 "ADD_MENU:menuId:name:price:category:isAvailable:stock" 형식으로 요청 전송
+                // 3. 서버 응답(ADD_SUCCESS)이면 테이블 갱신 및 입력란 초기화
+            // [입력값 검증] 재고 입력란이 비어있거나 숫자가 아니면 등록 불가
+            // [프로토콜] ADD_MENU:menuId:name:price:category:isAvailable:stock 형식으로 서버에 전송
+            // [서버 저장] 정상 등록 시 menus.csv에 반영됨
         String menuId = menuIdField.getText().trim();
         String name = nameField.getText().trim();
         int price = Integer.parseInt(priceField.getText().trim());
         String category = (String) cmbCategory.getSelectedItem();
         String isavailableStr = (String) cmbIsAvailable.getSelectedItem();
         boolean isAvailable = isavailableStr.equals("판매중");
-        
+        int stock = 0;
+        try {
+            stock = Integer.parseInt(stockField.getText().trim());
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "재고는 숫자로 입력해야 합니다.");
+            return;
+        }
         if (menuId.isEmpty() || name.isEmpty()) {
             JOptionPane.showMessageDialog(this, "메뉴 ID와 이름은 필수 항목입니다.");
+            return;
         }
-        
-        // 서버 요청 (프로토콜: "ADD_MENU:menuId:name:price:category:isavailable")
-        String request = String.format("ADD_MENU:%s:%s:%s:%s:%b", menuId,name,price,category,isAvailable);
+        // 서버 요청 (프로토콜: "ADD_MENU:menuId:name:price:category:isavailable:stock")
+        String request = String.format("ADD_MENU:%s:%s:%d:%s:%b:%d", menuId, name, price, category, isAvailable, stock);
         String response = NetworkService.getInstance().sendRequest(request);
-        
         System.out.println("보낸 요청 = [" + request + "]");
-        // Controller에 등록 요청 위임
-        // String message = controller.addNewMenu(menuId, name, price);
-        
-        // Controller가 반환한 메시지를 팝업으로 표시
         JOptionPane.showMessageDialog(this, response);
-        
-        // 성공적으로 등록되었다면 테이블 갱신
         if ("ADD_SUCCESS".equals(response)) {
             loadMenuData();
             clearFields();
@@ -231,36 +271,48 @@ public class MenuManagementFrame extends JFrame {
     }
     
     private void handleUpdateMenu() {
+                // [메뉴 수정 처리 상세 설명]
+                // 1. 테이블에서 수정할 행을 선택하지 않으면 경고
+                // 2. 입력값(메뉴ID, 이름, 가격, 종류, 판매여부, 재고) 검증
+                //    - 메뉴ID, 이름이 비어있으면 수정 불가
+                //    - 재고가 숫자가 아니면 수정 불가
+                // 3. 서버로 "UPDATE_MENU:menuId:name:price:category:isAvailable:stock" 형식으로 요청 전송
+                // 4. 서버 응답(UPDATE_SUCCESS)이면 테이블 갱신 및 입력란 초기화
+            // [입력값 검증] 재고 입력란이 비어있거나 숫자가 아니면 수정 불가
+            // [프로토콜] UPDATE_MENU:menuId:name:price:category:isAvailable:stock 형식으로 서버에 전송
+            // [서버 저장] 정상 수정 시 menus.csv에 반영됨
         int selectedRow = menuTable.getSelectedRow();
         if (selectedRow == -1) {
             JOptionPane.showMessageDialog(this, "수정할 메뉴를 테이블에서 선택해주세요.");
             return;
         }
-        
-        // 현재 선택된 ID와 수정된 정보를 가져와 새 Menu 객체를 생성
+
         String menuId = menuIdField.getText().trim();
         String name = nameField.getText().trim();
         int price = Integer.parseInt(priceField.getText().trim());
         String category = (String) cmbCategory.getSelectedItem();
-        
-        String isAvailableStr = (String) cmbIsAvailable.getSelectedItem();     
-        boolean isAvailable = isAvailableStr.equals("판매중"); // String -> boolean 변환
-        
+        String isAvailableStr = (String) cmbIsAvailable.getSelectedItem();
+        boolean isAvailable = isAvailableStr.equals("판매중");
+        int stock = 0;
+        try {
+            stock = Integer.parseInt(stockField.getText().trim());
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "재고는 숫자로 입력해야 합니다.");
+            return;
+        }
         if (menuId.isEmpty() || name.isEmpty()) {
             JOptionPane.showMessageDialog(this, "메뉴 ID와 이름 작성은 필수 항목입니다.");
+            return;
         }
-        
-        String request = String.format("UPDATE_MENU:%s:%s:%s:%s:%b", menuId, name, price, category, isAvailable);
+        // 서버 요청 (프로토콜: UPDATE_MENU:menuId:name:price:category:isAvailable:stock)
+        String request = String.format("UPDATE_MENU:%s:%s:%d:%s:%b:%d", menuId, name, price, category, isAvailable, stock);
         String response = NetworkService.getInstance().sendRequest(request);
         String finalMessage = "정보 수정 완료: ";
-        
-        // 최종 결과 메시지 표시 및 갱신
         if ("UPDATE_SUCCESS".equals(response)) {
             JOptionPane.showMessageDialog(this, finalMessage, "수정 완료", JOptionPane.INFORMATION_MESSAGE);
-            loadMenuData(); // 테이블 갱신 (성공 시)
+            loadMenuData();
             clearFields();
-        }
-        else {
+        } else {
             JOptionPane.showMessageDialog(this, "정보 수정 중 오류가 발생했습니다.", "오류", JOptionPane.ERROR_MESSAGE);
         }
     }
@@ -273,26 +325,26 @@ public class MenuManagementFrame extends JFrame {
 
     // 기타 유틸리티 메서드
     private void loadFieldsFromSelectedRow() {
-        DefaultTableModel model = (DefaultTableModel) menuTable.getModel();
+                // [입력란 동기화 상세 설명]
+                // - 테이블에서 행을 선택하면 해당 값이 입력란에 자동 채워짐
+                // - 판매여부가 '판매중지'면 재고 입력란 비활성화, '판매중'이면 활성화
+                // - 메뉴ID(menuIdField)는 항상 수정 가능하게 설정
+            // [UI 동기화] 테이블에서 행을 선택하면 입력란에 값이 채워지고, 판매여부/재고 필드도 동기화됨
+            // [ID 정책] 메뉴ID(menuIdField)는 항상 수정 가능하게 설정
         int row = menuTable.getSelectedRow();
         if (row >= 0) {
-            // 테이블의 데이터를 입력 필드에 표시 (PW는 보안상 제외)
-            menuIdField.setText((String) tableModel.getValueAt(row, 0));
-            nameField.setText((String) tableModel.getValueAt(row, 1));
-            // 권한은 필드에 표시하지 않음
-            priceField.setText((String) tableModel.getValueAt(row, 2));
-            
-            String category = (String) tableModel.getValueAt(row, 3);
+            menuIdField.setText(tableModel.getValueAt(row, 0).toString());
+            nameField.setText(tableModel.getValueAt(row, 1).toString());
+            priceField.setText(tableModel.getValueAt(row, 2).toString());
+            String category = tableModel.getValueAt(row, 3).toString();
             cmbCategory.setSelectedItem(category);
-            
-            String isAvailable = (String) tableModel.getValueAt(row, 4);
-            
-            // 테이블에는 "false" / "true"가 들어있을 수 있으므로 UI 표시값으로 변환
+            String isAvailable = tableModel.getValueAt(row, 4).toString();
             String displayStatus = "true".equalsIgnoreCase(isAvailable) || "판매중".equals(isAvailable) ? "판매중" : "판매중지";
-            cmbIsAvailable.setSelectedItem(displayStatus); // 판매여부 콤보박스에 값 설정
-            
-            // 수정 시 ID 변경을 막기 위해 비활성화
-            menuIdField.setEnabled(false); 
+            cmbIsAvailable.setSelectedItem(displayStatus);
+            String stock = tableModel.getValueAt(row, 5).toString();
+            stockField.setText(stock);
+            stockField.setEnabled(!"판매중지".equals(displayStatus));
+            menuIdField.setEnabled(true); // 항상 수정 가능하게
         }
     }
     
@@ -300,6 +352,7 @@ public class MenuManagementFrame extends JFrame {
         menuIdField.setText("");
         nameField.setText("");
         priceField.setText("");
+        stockField.setText("");
         menuIdField.setEnabled(true);
     }
 }
