@@ -12,10 +12,10 @@ public class FutureOccupancyPanel extends JPanel {
     private final JTextField startDateField;
     private final JTextField endDateField;
     private final JButton predictButton;
+    private final DefaultTableModel model;
     private final JTable table;
     private final JLabel infoLabel;
     private final JLabel avgLabel = new JLabel();
-    private final DefaultTableModel model;
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     /**
@@ -26,6 +26,9 @@ public class FutureOccupancyPanel extends JPanel {
      * - 서버와 통신: GET_FUTURE_OCCUPANCY 요청/응답 파싱
      */
     public FutureOccupancyPanel() {
+        // 표: 날짜, 타입별, 평균 점유율
+        model = new DefaultTableModel(new String[]{"날짜", "스탠다드 점유율", "디럭스 점유율", "스위트 점유율", "평균 점유율"}, 0);
+        table = new JTable(model);
 
         setLayout(new BorderLayout());
         // 상단 입력 패널: 기간 입력, 예측 버튼, 안내 메시지
@@ -40,6 +43,37 @@ public class FutureOccupancyPanel extends JPanel {
         topPanel.add(predictButton);
         infoLabel = new JLabel();            // 안내 메시지
         topPanel.add(infoLabel);
+        JButton printButton = new JButton("인쇄");
+        topPanel.add(printButton);
+
+        // 인쇄 기능: 요약+표 전체 인쇄 (Printable 구현)
+        printButton.addActionListener(e -> {
+            try {
+                java.awt.print.PrinterJob job = java.awt.print.PrinterJob.getPrinterJob();
+                job.setJobName("미래 점유율 보고서");
+                job.setPrintable((graphics, pageFormat, pageIndex) -> {
+                    if (pageIndex > 0) return java.awt.print.Printable.NO_SUCH_PAGE;
+                    Graphics2D g2 = (Graphics2D) graphics;
+                    g2.translate(pageFormat.getImageableX(), pageFormat.getImageableY());
+                    int y = 20;
+                    g2.setFont(new Font("맑은 고딕", Font.BOLD, 16));
+                    g2.drawString("미래 점유율 보고서", 20, y);
+                    y += 30;
+                    g2.setFont(new Font("맑은 고딕", Font.PLAIN, 13));
+                    g2.drawString(avgLabel.getText(), 20, y);
+                    y += 30;
+                    // 표 인쇄 (JTable.print() 활용)
+                    g2.translate(0, y);
+                    table.print();
+                    return java.awt.print.Printable.PAGE_EXISTS;
+                });
+                if (job.printDialog()) {
+                    job.print();
+                }
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "인쇄 실패: " + ex.getMessage());
+            }
+        });
 
         // 상단 요약 카드: 기간 평균 점유율 강조
         JPanel cards = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 8));
@@ -56,9 +90,6 @@ public class FutureOccupancyPanel extends JPanel {
         northWrap.add(cards, BorderLayout.CENTER);
         add(northWrap, BorderLayout.NORTH);
 
-        // 표: 날짜, 타입별, 평균 점유율
-        model = new DefaultTableModel(new String[]{"날짜", "스탠다드 점유율", "디럭스 점유율", "스위트 점유율", "평균 점유율"}, 0);
-        table = new JTable(model);
         JScrollPane tableScroll = new JScrollPane(table);
         tableScroll.setBorder(BorderFactory.createEmptyBorder(8,8,8,8));
         add(tableScroll, BorderLayout.CENTER);

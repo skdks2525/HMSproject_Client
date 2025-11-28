@@ -43,7 +43,7 @@ public class MenuSalesReportPanel extends JPanel {
      */
     public MenuSalesReportPanel() {
         setLayout(new BorderLayout());
-        // 상단 입력 패널: 기간 입력, 조회 버튼, 안내 메시지
+        // 상단 입력 패널: 기간 입력, 조회 버튼, 안내 메시지, 저장/인쇄 버튼
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 8));
         topPanel.add(new JLabel("시작일 (yyyy-MM-dd): "));
         startDateField = new JTextField(10);
@@ -55,6 +55,10 @@ public class MenuSalesReportPanel extends JPanel {
         topPanel.add(searchButton);
         infoLabel = new JLabel();
         topPanel.add(infoLabel);
+        JButton saveButton = new JButton("저장");
+        JButton printButton = new JButton("인쇄");
+        topPanel.add(saveButton);
+        topPanel.add(printButton);
 
         // 상단 카드: 총 매출, 일평균 매출
         JPanel cards = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 8));
@@ -83,6 +87,66 @@ public class MenuSalesReportPanel extends JPanel {
 
         searchButton.addActionListener(this::handleSearch);
         setDefaultDates();
+
+        // 저장 기능: 사용자가 직접 지정한 경로로 내보내기
+        saveButton.addActionListener(e -> {
+            JFileChooser chooser = new JFileChooser();
+            if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+                try (java.io.PrintWriter pw = new java.io.PrintWriter(chooser.getSelectedFile())) {
+                    // 헤더
+                    for (int i = 0; i < table.getColumnCount(); i++) {
+                        pw.print(table.getColumnName(i));
+                        if (i < table.getColumnCount() - 1) pw.print(",");
+                    }
+                    pw.println();
+                    // 데이터
+                    for (int r = 0; r < table.getRowCount(); r++) {
+                        for (int c = 0; c < table.getColumnCount(); c++) {
+                            pw.print(table.getValueAt(r, c));
+                            if (c < table.getColumnCount() - 1) pw.print(",");
+                        }
+                        pw.println();
+                    }
+                    // 요약 정보
+                    pw.println();
+                    pw.println("총 매출: " + totalSalesLabel.getText().replace("총 매출: ", ""));
+                    pw.println("일 평균 매출: " + avgSalesLabel.getText().replace("일 평균 매출: ", ""));
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this, "저장 실패: " + ex.getMessage());
+                }
+            }
+        });
+
+        // 인쇄 기능: 요약+표 전체 인쇄 (Printable 구현)
+        printButton.addActionListener(e -> {
+            try {
+                java.awt.print.PrinterJob job = java.awt.print.PrinterJob.getPrinterJob();
+                job.setJobName("식음료 매출 보고서");
+                job.setPrintable((graphics, pageFormat, pageIndex) -> {
+                    if (pageIndex > 0) return java.awt.print.Printable.NO_SUCH_PAGE;
+                    Graphics2D g2 = (Graphics2D) graphics;
+                    g2.translate(pageFormat.getImageableX(), pageFormat.getImageableY());
+                    int y = 20;
+                    g2.setFont(new Font("맑은 고딕", Font.BOLD, 16));
+                    g2.drawString("식음료 매출 보고서", 20, y);
+                    y += 30;
+                    g2.setFont(new Font("맑은 고딕", Font.PLAIN, 13));
+                    g2.drawString(totalSalesLabel.getText(), 20, y);
+                    y += 22;
+                    g2.drawString(avgSalesLabel.getText(), 20, y);
+                    y += 30;
+                    // 표 인쇄 (JTable.print() 활용)
+                    g2.translate(0, y);
+                    table.print(graphics);
+                    return java.awt.print.Printable.PAGE_EXISTS;
+                });
+                if (job.printDialog()) {
+                    job.print();
+                }
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "인쇄 실패: " + ex.getMessage());
+            }
+        });
     }
 
     /**
