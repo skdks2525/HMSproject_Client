@@ -10,7 +10,7 @@ import client.model.Cart;
 
 
 /**
- * 고객용 식음료 키오스크 프레임
+ * 고객용 룸서비스 키오스크 프레임
  * - 서버에서 판매중인 메뉴만 불러와 카드 형태로 표시
  * - 장바구니에 메뉴 추가, 결제, 결제 후 재고 반영 등 전체 주문 프로세스 담당
  * - 모든 서버 통신은 NetworkService를 통해 이루어짐
@@ -30,7 +30,7 @@ public class MenuKioskModernFrame extends JFrame {
      * - 장바구니/결제 기능 연결
      */
     public MenuKioskModernFrame() {
-        setTitle("식음료 주문");
+        setTitle("룸서비스 주문");
         setSize(900, 700);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -50,7 +50,7 @@ public class MenuKioskModernFrame extends JFrame {
     // ===============================
     private JPanel createHeader() {
         JPanel header = new JPanel();
-        JLabel title = new JLabel("식음료 주문");
+        JLabel title = new JLabel("룸서비스 주문");
         title.setFont(new Font("맑은 고딕", Font.BOLD, 28));
         header.add(title);
         return header;
@@ -212,12 +212,10 @@ public class MenuKioskModernFrame extends JFrame {
 
         JButton payButton = new JButton("결제");
         payButton.addActionListener(e -> {
-            String cardNum = JOptionPane.showInputDialog(dialog, "카드번호를 입력하세요");
-            if (cardNum == null || cardNum.trim().isEmpty()) return;
-            // 서버에 결제 요청 (ORDER_MENU:고객명:총액:결제상태:메뉴목록)
+            // 카드번호 입력 없이 바로 결제 처리
             String req = String.format("ORDER_MENU:%s:%d:%s:%s", System.getProperty("user.name"), cart.getTotalPrice(), "Paid", cart.getFoodNamesString());
-            String resp = NetworkService.getInstance().sendRequest(req);
-            JOptionPane.showMessageDialog(dialog, resp);
+            NetworkService.getInstance().sendRequest(req);
+            JOptionPane.showMessageDialog(dialog, "요금이 추가되었습니다.");
             cart.clear();
             dialog.dispose();
             loadMenuCards(); // 결제 후 재고 반영
