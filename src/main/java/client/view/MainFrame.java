@@ -68,6 +68,7 @@ public class MainFrame extends JFrame {
         checkInOutButton.addActionListener(e -> {
             JTabbedPane tabs = new JTabbedPane();
             tabs.addTab("객실 매출 보고서", new RoomSalesReportPanel());
+            tabs.addTab("식음료 매출 보고서", new MenuSalesReportPanel());
             tabs.addTab("점유율 보고서", new OccupancyReportPanel());
             JFrame f = new JFrame("보고서");
             f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
