@@ -12,13 +12,21 @@ public class RegisterFrame extends JFrame {
     }
 
     private void initComponents() {
-        JPanel bgPanel = new JPanel(null);
+        JPanel bgPanel = new JPanel(null) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                // 좌측 전체 연두색 배경
+                g.setColor(new Color(204, 255, 204));
+                g.fillRect(0, 0, 400, getHeight());
+            }
+        };
         bgPanel.setBackground(Color.WHITE);
-        bgPanel.setPreferredSize(new Dimension(800, 500));
+        bgPanel.setPreferredSize(new Dimension(800, 650));
 
         JPanel sidePanel = new JPanel(new GridBagLayout());
-        sidePanel.setBackground(new Color(204, 255, 204));
-        sidePanel.setBounds(0, 0, 400, 500);
+        sidePanel.setOpaque(false); // 배경색 투명 처리 (bgPanel에서 그림)
+        sidePanel.setBounds(0, 0, 400, 650);
 
         JLabel lblLogo = new JLabel("JOIN US");
         lblLogo.setFont(new Font("맑은 고딕", Font.BOLD, 30));
@@ -28,13 +36,25 @@ public class RegisterFrame extends JFrame {
 
         JPanel formPanel = new JPanel(null);
         formPanel.setBackground(Color.WHITE);
-        formPanel.setBounds(400, 0, 400, 500);
+        formPanel.setBounds(400, 0, 400, 650);
 
         JLabel lblTitle = new JLabel("SIGN UP");
         lblTitle.setFont(new Font("맑은 고딕", Font.BOLD, 36));
         lblTitle.setForeground(new Color(0, 102, 51));
-        lblTitle.setBounds(130, 40, 150, 50);
+        lblTitle.setBounds(120, 10, 180, 50);
         formPanel.add(lblTitle);
+
+        // SIGN UP과 ROLE 사이 간격 확보
+        int roleY = 70 + 20; // 기존 70에서 20px 더 띄움
+
+        // 역할 선택 (맨 위)
+        JLabel lblRole = new JLabel("Role");
+        lblRole.setBounds(40, roleY, 100, 20);
+        formPanel.add(lblRole);
+        String[] roles = {"Customer", "CSR", "Manager"};
+        JComboBox<String> cmbRole = new JComboBox<>(roles);
+        cmbRole.setBounds(140, roleY - 5, 220, 30);
+        formPanel.add(cmbRole);
 
         // ID 입력
         JLabel lblId = new JLabel("ID (Email)");
@@ -80,21 +100,31 @@ public class RegisterFrame extends JFrame {
         JButton btnRegister = new JButton("SIGN UP");
         btnRegister.setBackground(new Color(204, 255, 204));
         btnRegister.setForeground(new Color(0, 102, 51));
-        btnRegister.setFont(new Font("맑은 고딕", Font.BOLD, 14));
-        btnRegister.setBounds(40, 460, 120, 40);
+        btnRegister.setFont(new Font("맑은 고딕", Font.BOLD, 16));
+        btnRegister.setBounds(40, 510, 320, 45); // 넓게, 아래로
         formPanel.add(btnRegister);
 
-        // 돌아가기(로그인) 라벨/버튼
-        JLabel lblHaveAccount = new JLabel("I have an account");
-        lblHaveAccount.setBounds(40, 520, 150, 30);
-        formPanel.add(lblHaveAccount);
-
-        JButton btnBack = new JButton("Login");
-        btnBack.setForeground(new Color(255, 51, 51));
-        btnBack.setBorderPainted(false);
-        btnBack.setContentAreaFilled(false);
-        btnBack.setBounds(180, 520, 80, 30);
+        // 로그인으로 돌아가기 버튼 (SIGN UP 버튼과 동일한 연두색)
+        JButton btnBack = new JButton("← 로그인 화면으로");
+        btnBack.setBackground(new Color(204, 255, 204));
+        btnBack.setForeground(new Color(0, 102, 51));
+        btnBack.setFont(new Font("맑은 고딕", Font.BOLD, 15));
+        btnBack.setBounds(40, 570, 320, 40);
+        btnBack.setFocusPainted(false);
         formPanel.add(btnBack);
+        // 역할 선택 시 CSR/Manager면 즉시 인증코드 요구
+        cmbRole.addActionListener(e -> {
+            String selected = (String) cmbRole.getSelectedItem();
+            if ("CSR".equals(selected) || "Manager".equals(selected)) {
+                String code = JOptionPane.showInputDialog(this, "인증코드를 입력하세요", "인증코드", JOptionPane.PLAIN_MESSAGE);
+                if (code == null || !"0000".equals(code.trim())) {
+                    JOptionPane.showMessageDialog(this, "인증코드가 올바르지 않습니다. 역할이 Customer로 변경됩니다.");
+                    cmbRole.setSelectedIndex(0); // Customer로 롤백
+                }
+            }
+        });
+
+        // 기존 돌아가기 라벨/버튼 제거 (위에서 btnBack으로 대체)
 
         bgPanel.add(formPanel);
 
@@ -112,6 +142,7 @@ public class RegisterFrame extends JFrame {
             String pw = new String(txtPw.getPassword()).trim();
             String pw2 = new String(txtPwConfirm.getPassword()).trim();
             String phone = txtPhone.getText().trim();
+            String role = (String) cmbRole.getSelectedItem();
 
             // 1. 유효성 검사
             if(id.isEmpty() || name.isEmpty() || pw.isEmpty() || phone.isEmpty()) {
@@ -123,9 +154,8 @@ public class RegisterFrame extends JFrame {
                 return;
             }
 
-            // 2. 서버 전송 (기본 권한: Customer)
-            // 프로토콜: "ADD_USER:아이디:이름:비번:권한:전화번호"
-            String request = String.format("ADD_USER:%s:%s:%s:%s:%s", id, name, pw, "Customer", phone);
+            // 2. 서버 전송 (선택한 권한)
+            String request = String.format("ADD_USER:%s:%s:%s:%s:%s", id, name, pw, role, phone);
             String response = NetworkService.getInstance().sendRequest(request);
 
             if("ADD_SUCCESS".equals(response)) {

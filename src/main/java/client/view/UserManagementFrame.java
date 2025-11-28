@@ -126,9 +126,9 @@ public class UserManagementFrame extends JFrame {
         JButton btnDelete = new JButton("삭제");
         JButton btnModify = new JButton("수정");
         
-        btnAdd.addActionListener(e -> handleAddUserWithAuth());
-        btnDelete.addActionListener(e -> handleDeleteUserWithAuth());
-        btnModify.addActionListener(e -> handleModifyUserWithAuth());
+        btnAdd.addActionListener(e -> handleAddUser());
+        btnDelete.addActionListener(e -> handleDeleteUser(e));
+        btnModify.addActionListener(e -> handleModifyUser());
         
         btnPanel.add(btnAdd);
         btnPanel.add(btnDelete);
@@ -175,33 +175,6 @@ public class UserManagementFrame extends JFrame {
             }
         } else {
             displayError("목록 불러오기 실패: " + response);
-        }
-    }
-
-    /**
-     * 사용자 추가 요청 (ADD_USER)
-     */
-    private void handleAddUser(ActionEvent e) {
-        String id = txtId.getText().trim();
-        String pw = txtPw.getText().trim();
-        String role = (String) cmbRole.getSelectedItem();
-
-        if (id.isEmpty() || pw.isEmpty()) {
-            displayError("아이디와 비밀번호를 입력해주세요.");
-            return;
-        }
-
-        // 1. 서버 요청 (프로토콜: "ADD_USER:id:pw:role")
-        String request = String.format("ADD_USER:%s:%s:%s", id, pw, role);
-        String response = NetworkService.getInstance().sendRequest(request);
-
-        // 2. 응답 처리
-        if ("ADD_SUCCESS".equals(response)) {
-            displayLog("사용자 추가 성공: " + id);
-            loadUserList(); // 목록 갱신
-            txtId.setText(""); txtPw.setText(""); // 입력창 비우기
-        } else {
-            displayError("추가 실패: " + response);
         }
     }
 
@@ -282,8 +255,7 @@ public class UserManagementFrame extends JFrame {
         return true;
     }
 
-    private void handleAddUserWithAuth() {
-        if(!verifyAuthCode()) return;
+    private void handleAddUser() {
         String id = txtId.getText().trim();
         String name = txtName.getText().trim();
         String pw = txtPw.getText().trim();
@@ -304,13 +276,7 @@ public class UserManagementFrame extends JFrame {
         }
     }
 
-    private void handleDeleteUserWithAuth() {
-        if(!verifyAuthCode()) return;
-        handleDeleteUser(null); // 기존 로직 재사용
-    }
-
-    private void handleModifyUserWithAuth() {
-        if(!verifyAuthCode()) return;
+    private void handleModifyUser() {
         String id = txtId.getText().trim();
         String name = txtName.getText().trim();
         String pw = txtPw.getText().trim();
