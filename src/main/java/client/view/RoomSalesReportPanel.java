@@ -30,18 +30,26 @@ public class RoomSalesReportPanel extends JPanel {
     private final JLabel titleLabel;
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
+    /**
+     * 객실 매출 리포트 패널
+     * - 상단: 기간 입력, 조회 버튼, 안내 메시지
+     * - 상단 카드: 총 매출, 일 평균 매출 강조
+     * - 중앙: 매출 그래프(스무딩 곡선, 그리드, 축 레이블)
+     * - 서버와 통신: GET_ROOM_SALES 요청/응답 파싱
+     */
     public RoomSalesReportPanel() {
         setLayout(new BorderLayout());
+        // 상단 입력 패널: 기간 입력, 조회 버튼, 안내 메시지
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 8));
         topPanel.add(new JLabel("시작일 (yyyy-MM-dd): "));
-        startDateField = new JTextField(10);
+        startDateField = new JTextField(10); // 시작일 입력
         topPanel.add(startDateField);
         topPanel.add(new JLabel("~ 종료일 (yyyy-MM-dd): "));
-        endDateField = new JTextField(10);
+        endDateField = new JTextField(10);   // 종료일 입력
         topPanel.add(endDateField);
-        searchButton = new JButton("조회");
+        searchButton = new JButton("조회");  // 조회 버튼
         topPanel.add(searchButton);
-        infoLabel = new JLabel();
+        infoLabel = new JLabel();            // 안내 메시지
         topPanel.add(infoLabel);
         // 상단 타이틀 및 요약 카드
         JPanel headerPanel = new JPanel(new BorderLayout());
@@ -50,6 +58,7 @@ public class RoomSalesReportPanel extends JPanel {
         titleLabel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
         headerPanel.add(titleLabel, BorderLayout.NORTH);
 
+        // 상단 카드: 총 매출, 일 평균 매출 강조
         JPanel cards = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 8));
         totalSalesLabel = new JLabel("총 매출: ₩0");
         totalSalesLabel.setFont(totalSalesLabel.getFont().deriveFont(14f));
@@ -65,24 +74,26 @@ public class RoomSalesReportPanel extends JPanel {
         cards.add(avgSalesLabel);
         headerPanel.add(cards, BorderLayout.CENTER);
 
+        // 상단 전체 래핑
         JPanel northWrap = new JPanel(new BorderLayout());
         northWrap.add(topPanel, BorderLayout.NORTH);
         northWrap.add(headerPanel, BorderLayout.CENTER);
         add(northWrap, BorderLayout.NORTH);
 
+        // 매출 그래프(중앙)
         graphPanel = new SalesGraphPanel();
         graphPanel.setBorder(BorderFactory.createEmptyBorder(12,12,12,12));
         add(graphPanel, BorderLayout.CENTER);
 
-        // 조회 버튼 클릭 시 handleSearch가 호출됩니다.
+        // 조회 버튼 클릭 시 handleSearch가 호출됨
         searchButton.addActionListener(this::handleSearch);
-        setDefaultDates();
+        setDefaultDates(); // 기본 시작/종료일 세팅
     }
 
     private void setDefaultDates() {
-        LocalDate today = LocalDate.now();
-        startDateField.setText(today.minusDays(7).format(DATE_FORMAT));
-        endDateField.setText(today.minusDays(1).format(DATE_FORMAT));
+        // 기본 시작일: 2025-10-01, 종료일: 어제
+        startDateField.setText("2025-10-01");
+        endDateField.setText(LocalDate.now().minusDays(1).format(DATE_FORMAT));
     }
 
     @SuppressWarnings("unused")
