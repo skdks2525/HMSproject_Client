@@ -38,56 +38,84 @@ public class RoomSalesReportPanel extends JPanel {
      * - 서버와 통신: GET_ROOM_SALES 요청/응답 파싱
      */
     public RoomSalesReportPanel() {
+
         setLayout(new BorderLayout());
-        // 상단 입력 패널: 기간 입력, 조회 버튼, 안내 메시지
-        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 8));
-        topPanel.add(new JLabel("시작일 (yyyy-MM-dd): "));
-        startDateField = new JTextField(10); // 시작일 입력
+        setBackground(Color.WHITE);
+        Color navy = new Color(10, 48, 87);
+        Font labelFont = new Font("맑은 고딕", Font.BOLD, 16);
+        Font cardFont = new Font("맑은 고딕", Font.BOLD, 15);
+        Font btnFont = new Font("맑은 고딕", Font.BOLD, 15);
+
+        // 상단 제목/뒤로가기 패널
+        // 상단 제목/뒤로가기 패널 제거
+
+        // 기존 northWrap(검색/카드) 아래로 내림
+        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 12));
+        topPanel.setBackground(Color.WHITE);
+        JLabel lblStart = new JLabel("시작일 (yyyy-MM-dd): ");
+        lblStart.setFont(labelFont);
+        lblStart.setForeground(navy);
+        topPanel.add(lblStart);
+        startDateField = new JTextField(10);
+        startDateField.setFont(labelFont);
         topPanel.add(startDateField);
-        topPanel.add(new JLabel("~ 종료일 (yyyy-MM-dd): "));
-        endDateField = new JTextField(10);   // 종료일 입력
+        JLabel lblEnd = new JLabel("~ 종료일 (yyyy-MM-dd): ");
+        lblEnd.setFont(labelFont);
+        lblEnd.setForeground(navy);
+        topPanel.add(lblEnd);
+        endDateField = new JTextField(10);
+        endDateField.setFont(labelFont);
         topPanel.add(endDateField);
-        searchButton = new JButton("조회");  // 조회 버튼
+        searchButton = new JButton("조회");
+        searchButton.setBackground(navy);
+        searchButton.setForeground(Color.WHITE);
+        searchButton.setFont(btnFont);
+        searchButton.setFocusPainted(false);
         topPanel.add(searchButton);
-        infoLabel = new JLabel();            // 안내 메시지
+        infoLabel = new JLabel();
+        infoLabel.setFont(new Font("맑은 고딕", Font.PLAIN, 13));
+        infoLabel.setForeground(new Color(200, 0, 0));
         topPanel.add(infoLabel);
-        // 상단 타이틀 및 요약 카드
+
         JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setBackground(Color.WHITE);
         titleLabel = new JLabel("객실 매출 그래프");
-        titleLabel.setFont(titleLabel.getFont().deriveFont(18f).deriveFont(Font.BOLD));
+        titleLabel.setFont(new Font("맑은 고딕", Font.BOLD, 22));
+        titleLabel.setForeground(navy);
         titleLabel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
         headerPanel.add(titleLabel, BorderLayout.NORTH);
 
-        // 상단 카드: 총 매출, 일 평균 매출 강조
-        JPanel cards = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 8));
+        JPanel cards = new JPanel(new FlowLayout(FlowLayout.LEFT, 16, 10));
+        cards.setBackground(Color.WHITE);
         totalSalesLabel = new JLabel("총 매출: ₩0");
-        totalSalesLabel.setFont(totalSalesLabel.getFont().deriveFont(14f));
+        totalSalesLabel.setFont(cardFont);
+        totalSalesLabel.setForeground(navy);
         totalSalesLabel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(220,220,220)),
-            BorderFactory.createEmptyBorder(8,12,8,12)));
+            BorderFactory.createLineBorder(navy, 1),
+            BorderFactory.createEmptyBorder(10,18,10,18)));
         avgSalesLabel = new JLabel("일 평균 매출: ₩0");
-        avgSalesLabel.setFont(avgSalesLabel.getFont().deriveFont(14f));
+        avgSalesLabel.setFont(cardFont);
+        avgSalesLabel.setForeground(navy);
         avgSalesLabel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(220,220,220)),
-            BorderFactory.createEmptyBorder(8,12,8,12)));
+            BorderFactory.createLineBorder(navy, 1),
+            BorderFactory.createEmptyBorder(10,18,10,18)));
         cards.add(totalSalesLabel);
         cards.add(avgSalesLabel);
         headerPanel.add(cards, BorderLayout.CENTER);
 
-        // 상단 전체 래핑
         JPanel northWrap = new JPanel(new BorderLayout());
+        northWrap.setBackground(Color.WHITE);
         northWrap.add(topPanel, BorderLayout.NORTH);
         northWrap.add(headerPanel, BorderLayout.CENTER);
-        add(northWrap, BorderLayout.NORTH);
+        add(northWrap, BorderLayout.PAGE_START);
 
-        // 매출 그래프(중앙)
         graphPanel = new SalesGraphPanel();
-        graphPanel.setBorder(BorderFactory.createEmptyBorder(12,12,12,12));
+        graphPanel.setBorder(BorderFactory.createEmptyBorder(18,18,18,18));
+        graphPanel.setBackground(Color.WHITE);
         add(graphPanel, BorderLayout.CENTER);
 
-        // 조회 버튼 클릭 시 handleSearch가 호출됨
         searchButton.addActionListener(this::handleSearch);
-        setDefaultDates(); // 기본 시작/종료일 세팅
+        setDefaultDates();
     }
 
     private void setDefaultDates() {

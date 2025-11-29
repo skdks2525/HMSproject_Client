@@ -12,119 +12,114 @@ public class RegisterFrame extends JFrame {
     }
 
     private void initComponents() {
-        JPanel bgPanel = new JPanel(null) {
-            @Override
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                // 좌측 전체 연두색 배경
-                g.setColor(new Color(204, 255, 204));
-                g.fillRect(0, 0, 400, getHeight());
-            }
-        };
+        JPanel bgPanel = new JPanel(new GridBagLayout());
         bgPanel.setBackground(Color.WHITE);
-        bgPanel.setPreferredSize(new Dimension(800, 650));
-
-        JPanel sidePanel = new JPanel(new GridBagLayout());
-        sidePanel.setOpaque(false); // 배경색 투명 처리 (bgPanel에서 그림)
-        sidePanel.setBounds(0, 0, 400, 650);
-
-        JLabel lblLogo = new JLabel("JOIN US");
-        lblLogo.setFont(new Font("맑은 고딕", Font.BOLD, 30));
-        lblLogo.setForeground(new Color(0, 102, 51));
-        sidePanel.add(lblLogo);
-        bgPanel.add(sidePanel);
+        bgPanel.setPreferredSize(new Dimension(400, 540));
 
         JPanel formPanel = new JPanel(null);
         formPanel.setBackground(Color.WHITE);
-        formPanel.setBounds(400, 0, 400, 650);
+        formPanel.setPreferredSize(new Dimension(350, 500));
+        formPanel.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 2));
 
         JLabel lblTitle = new JLabel("SIGN UP");
-        lblTitle.setFont(new Font("맑은 고딕", Font.BOLD, 36));
-        lblTitle.setForeground(new Color(0, 102, 51));
-        lblTitle.setBounds(120, 10, 180, 50);
+        lblTitle.setFont(new Font("맑은 고딕", Font.BOLD, 32));
+        lblTitle.setForeground(new Color(10, 48, 87));
+        lblTitle.setBounds(110, 20, 200, 40);
         formPanel.add(lblTitle);
 
-        // SIGN UP과 ROLE 사이 간격 확보
-        int roleY = 70 + 20; // 기존 70에서 20px 더 띄움
-
-        // 역할 선택 (맨 위)
+        int y = 70;
         JLabel lblRole = new JLabel("Role");
-        lblRole.setBounds(40, roleY, 100, 20);
+        lblRole.setFont(new Font("맑은 고딕", Font.PLAIN, 14));
+        lblRole.setBounds(40, y, 100, 20);
         formPanel.add(lblRole);
         String[] roles = {"Customer", "CSR", "Manager"};
         JComboBox<String> cmbRole = new JComboBox<>(roles);
-        cmbRole.setBounds(140, roleY - 5, 220, 30);
+        cmbRole.setBounds(140, y - 3, 170, 28);
         formPanel.add(cmbRole);
 
-        // ID 입력
+        y += 40;
         JLabel lblId = new JLabel("ID (Email)");
-        lblId.setBounds(40, 110, 100, 20);
+        lblId.setFont(new Font("맑은 고딕", Font.PLAIN, 14));
+        lblId.setBounds(40, y, 100, 20);
         formPanel.add(lblId);
         JTextField txtId = new JTextField();
-        txtId.setBounds(40, 130, 320, 35);
+        txtId.setFont(new Font("맑은 고딕", Font.PLAIN, 14));
+        txtId.setBounds(40, y + 20, 270, 32);
+        txtId.setBorder(BorderFactory.createLineBorder(new Color(180, 180, 180)));
         formPanel.add(txtId);
 
-        // 이름 입력
+        y += 60;
         JLabel lblName = new JLabel("Name");
-        lblName.setBounds(40, 180, 100, 20);
+        lblName.setFont(new Font("맑은 고딕", Font.PLAIN, 14));
+        lblName.setBounds(40, y, 100, 20);
         formPanel.add(lblName);
         JTextField txtName = new JTextField();
-        txtName.setBounds(40, 200, 320, 35);
+        txtName.setFont(new Font("맑은 고딕", Font.PLAIN, 14));
+        txtName.setBounds(40, y + 20, 270, 32);
+        txtName.setBorder(BorderFactory.createLineBorder(new Color(180, 180, 180)));
         formPanel.add(txtName);
 
-        // PW 입력
+        y += 60;
         JLabel lblPw = new JLabel("Password");
-        lblPw.setBounds(40, 250, 100, 20);
+        lblPw.setFont(new Font("맑은 고딕", Font.PLAIN, 14));
+        lblPw.setBounds(40, y, 100, 20);
         formPanel.add(lblPw);
         JPasswordField txtPw = new JPasswordField();
-        txtPw.setBounds(40, 270, 320, 35);
+        txtPw.setFont(new Font("맑은 고딕", Font.PLAIN, 14));
+        txtPw.setBounds(40, y + 20, 270, 32);
+        txtPw.setBorder(BorderFactory.createLineBorder(new Color(180, 180, 180)));
         formPanel.add(txtPw);
 
-        // PW 확인
+        y += 60;
         JLabel lblPwConfirm = new JLabel("Confirm Password");
-        lblPwConfirm.setBounds(40, 320, 150, 20);
+        lblPwConfirm.setFont(new Font("맑은 고딕", Font.PLAIN, 14));
+        lblPwConfirm.setBounds(40, y, 150, 20);
         formPanel.add(lblPwConfirm);
         JPasswordField txtPwConfirm = new JPasswordField();
-        txtPwConfirm.setBounds(40, 340, 320, 35);
+        txtPwConfirm.setFont(new Font("맑은 고딕", Font.PLAIN, 14));
+        txtPwConfirm.setBounds(40, y + 20, 270, 32);
+        txtPwConfirm.setBorder(BorderFactory.createLineBorder(new Color(180, 180, 180)));
         formPanel.add(txtPwConfirm);
 
-        // 전화번호 입력
+        y += 60;
         JLabel lblPhone = new JLabel("Phone");
-        lblPhone.setBounds(40, 390, 100, 20);
+        lblPhone.setFont(new Font("맑은 고딕", Font.PLAIN, 14));
+        lblPhone.setBounds(40, y, 100, 20);
         formPanel.add(lblPhone);
         JTextField txtPhone = new JTextField();
-        txtPhone.setBounds(40, 410, 320, 35);
+        txtPhone.setFont(new Font("맑은 고딕", Font.PLAIN, 14));
+        txtPhone.setBounds(40, y + 20, 270, 32);
+        txtPhone.setBorder(BorderFactory.createLineBorder(new Color(180, 180, 180)));
         formPanel.add(txtPhone);
 
-        // 가입 버튼
         JButton btnRegister = new JButton("SIGN UP");
-        btnRegister.setBackground(new Color(204, 255, 204));
-        btnRegister.setForeground(new Color(0, 102, 51));
+        btnRegister.setBackground(new Color(10, 48, 87));
+        btnRegister.setForeground(Color.WHITE);
         btnRegister.setFont(new Font("맑은 고딕", Font.BOLD, 16));
-        btnRegister.setBounds(40, 510, 320, 45); // 넓게, 아래로
+        btnRegister.setFocusPainted(false);
+        btnRegister.setBounds(40, 420, 270, 40);
         formPanel.add(btnRegister);
 
-        // 로그인으로 돌아가기 버튼 (SIGN UP 버튼과 동일한 연두색)
         JButton btnBack = new JButton("← 로그인 화면으로");
-        btnBack.setBackground(new Color(204, 255, 204));
-        btnBack.setForeground(new Color(0, 102, 51));
-        btnBack.setFont(new Font("맑은 고딕", Font.BOLD, 15));
-        btnBack.setBounds(40, 570, 320, 40);
+        btnBack.setBackground(Color.WHITE);
+        btnBack.setForeground(new Color(10, 48, 87));
+        btnBack.setFont(new Font("맑은 고딕", Font.BOLD, 13));
+        btnBack.setBorderPainted(false);
+        btnBack.setContentAreaFilled(false);
         btnBack.setFocusPainted(false);
+        btnBack.setBounds(40, 470, 200, 30);
         formPanel.add(btnBack);
-        // 역할 선택 시 CSR/Manager면 즉시 인증코드 요구
+
         cmbRole.addActionListener(e -> {
             String selected = (String) cmbRole.getSelectedItem();
             if ("CSR".equals(selected) || "Manager".equals(selected)) {
                 String code = JOptionPane.showInputDialog(this, "인증코드를 입력하세요", "인증코드", JOptionPane.PLAIN_MESSAGE);
                 if (code == null || !"0000".equals(code.trim())) {
                     JOptionPane.showMessageDialog(this, "인증코드가 올바르지 않습니다. 역할이 Customer로 변경됩니다.");
-                    cmbRole.setSelectedIndex(0); // Customer로 롤백
+                    cmbRole.setSelectedIndex(0);
                 }
             }
         });
-
-        // 기존 돌아가기 라벨/버튼 제거 (위에서 btnBack으로 대체)
 
         bgPanel.add(formPanel);
 

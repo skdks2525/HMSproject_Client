@@ -29,114 +29,186 @@ public class UserManagementFrame extends JFrame {
 
     public UserManagementFrame() {
         setTitle("직원 및 권한 관리 시스템");
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); // 이 창만 닫힘
-        setSize(1000, 700); // 창 크기 고정
-        
-        initComponents();
-        
-        // 창이 열리면 자동으로 목록을 불러옴
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setSize(1000, 750); // 높이 줄임
+        getContentPane().setBackground(Color.WHITE);
+
+        setLayout(new BorderLayout());
+        // 상단 제목/뒤로가기 패널 제거
+
+        JPanel mainPanel = initComponents();
+        add(mainPanel, BorderLayout.CENTER);
         loadUserList();
-        
         setLocationRelativeTo(null);
     }
 
-    private void initComponents() {
-        // 메인 컨테이너 설정
-        setLayout(new BorderLayout(10, 10));
-        ((JComponent) getContentPane()).setBorder(new EmptyBorder(10, 10, 10, 10));
+    private JPanel initComponents() {
+        JPanel root = new JPanel(new BorderLayout(16, 16));
+        root.setBorder(new EmptyBorder(18, 18, 18, 18));
+        Color navy = new Color(10, 48, 87);
+        Font btnFont = new Font("맑은 고딕", Font.BOLD, 15);
 
         // 1. 상단: 사용자 목록 (테이블)
         JPanel listPanel = new JPanel(new BorderLayout());
-        listPanel.setBorder(BorderFactory.createTitledBorder("사용자 목록 (서버 데이터)"));
-        
-        String[] columns = {"아이디", "이름", "비밀번호", "권한", "전화번호"}; // 모든 정보 표시
+        listPanel.setBackground(Color.WHITE);
+        listPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(navy, 1), "사용자 목록 (서버 데이터)", 0, 0, new Font("맑은 고딕", Font.BOLD, 15), navy));
+
+        String[] columns = {"아이디", "이름", "비밀번호", "권한", "전화번호"};
         tableModel = new DefaultTableModel(columns, 0) {
-            @Override // 테이블 수정 불가 설정
+            @Override
             public boolean isCellEditable(int row, int column) { return false; }
         };
         userTable = new JTable(tableModel);
-        listPanel.add(new JScrollPane(userTable), BorderLayout.CENTER);
-        
-        // 새로고침 버튼
+        userTable.setFont(new Font("맑은 고딕", Font.PLAIN, 14));
+        userTable.getTableHeader().setFont(new Font("맑은 고딕", Font.BOLD, 14));
+        userTable.getTableHeader().setBackground(navy);
+        userTable.getTableHeader().setForeground(Color.WHITE);
+        userTable.setRowHeight(28);
+        JScrollPane userTableScroll = new JScrollPane(userTable);
+        userTableScroll.setPreferredSize(new Dimension(0, 220)); // 테이블 높이 약간 늘림
+        listPanel.add(userTableScroll, BorderLayout.CENTER);
+
         JButton btnRefresh = new JButton("목록 새로고침");
+        btnRefresh.setBackground(navy);
+        btnRefresh.setForeground(Color.WHITE);
+        btnRefresh.setFont(btnFont);
+        btnRefresh.setFocusPainted(false);
         btnRefresh.addActionListener(e -> loadUserList());
         listPanel.add(btnRefresh, BorderLayout.SOUTH);
 
-        add(listPanel, BorderLayout.CENTER);
-
         // 2. 하단: 관리 패널 (추가/삭제) + 로그창
-        JPanel bottomPanel = new JPanel(new BorderLayout(5, 5));
-        
-        // 2-1. 입력 폼 (Left)
-        JPanel inputPanel = createManagementPanel();
+        JPanel bottomPanel = new JPanel(new BorderLayout(12, 12));
+        bottomPanel.setBackground(Color.WHITE);
+
+        JPanel inputPanel = createManagementPanel(navy, btnFont);
+        inputPanel.setPreferredSize(new Dimension(420, 220)); // 직원 추가/삭제/수정 패널 넓힘
         bottomPanel.add(inputPanel, BorderLayout.WEST);
-        
-        // 2-2. 로그 출력 영역 (Center)
-        outputArea = new JTextArea(8, 30);
-        outputArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
+
+        outputArea = new JTextArea(5, 15); // 로그창 행 수, 열 수 축소
+        outputArea.setFont(new Font("맑은 고딕", Font.PLAIN, 13));
         outputArea.setEditable(false);
         JScrollPane logScroll = new JScrollPane(outputArea);
-        
-        // 로그 패널에 클리어 버튼 추가
+
         JPanel logPanel = new JPanel(new BorderLayout());
-        logPanel.setBorder(BorderFactory.createTitledBorder("작업 로그"));
+        logPanel.setBackground(Color.WHITE);
+        logPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(navy, 1), "작업 로그", 0, 0, new Font("맑은 고딕", Font.BOLD, 15), navy));
         logPanel.add(logScroll, BorderLayout.CENTER);
-        
+
         JButton btnClearLog = new JButton("로그 지우기");
+        btnClearLog.setBackground(Color.WHITE);
+        btnClearLog.setForeground(navy);
+        btnClearLog.setFont(btnFont);
+        btnClearLog.setFocusPainted(false);
+        btnClearLog.setBorder(BorderFactory.createLineBorder(navy, 1));
         btnClearLog.addActionListener(e -> outputArea.setText(""));
         logPanel.add(btnClearLog, BorderLayout.SOUTH);
-        
+
+        logPanel.setPreferredSize(new Dimension(420, 220));
         bottomPanel.add(logPanel, BorderLayout.CENTER);
 
-        add(bottomPanel, BorderLayout.SOUTH);
+        root.add(listPanel, BorderLayout.NORTH);
+        root.add(bottomPanel, BorderLayout.CENTER);
+        return root;
     }
 
     /**
      * 관리(추가/삭제) 기능을 위한 패널 생성
      */
     private JPanel createManagementPanel() {
-        JPanel panel = new JPanel(new GridLayout(6, 2, 5, 5));
-        panel.setBorder(BorderFactory.createTitledBorder("직원 추가 / 삭제 / 수정"));
+        return createManagementPanel(new Color(10, 48, 87), new Font("맑은 고딕", Font.BOLD, 15));
+    }
 
-        // 입력 필드
-        panel.add(new JLabel("아이디:"));
-        txtId = new JTextField(10);
-        panel.add(txtId);
+    private JPanel createManagementPanel(Color navy, Font btnFont) {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBackground(Color.WHITE);
+        panel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(navy, 1), "직원 추가 / 삭제 / 수정", 0, 0, new Font("맑은 고딕", Font.BOLD, 15), navy));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(8, 8, 8, 8);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 0;
 
-        panel.add(new JLabel("이름:"));
-        txtName = new JTextField(10);
-        panel.add(txtName);
+        JLabel[] labels = {
+            new JLabel("아이디:"), new JLabel("이름:"), new JLabel("비밀번호:"), new JLabel("권한:"), new JLabel("전화번호:")
+        };
+        for (JLabel l : labels) {
+            l.setFont(new Font("맑은 고딕", Font.PLAIN, 15));
+            l.setForeground(navy);
+        }
 
-        panel.add(new JLabel("비밀번호:"));
-        txtPw = new JTextField(10);
-        panel.add(txtPw);
+        // 아이디
+        gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0.2;
+        panel.add(labels[0], gbc);
+        gbc.gridx = 1; gbc.gridy = 0; gbc.weightx = 0.8;
+        txtId = new JTextField(18);
+        txtId.setFont(new Font("맑은 고딕", Font.PLAIN, 16));
+        txtId.setPreferredSize(new Dimension(180, 36));
+        panel.add(txtId, gbc);
 
-        panel.add(new JLabel("권한:"));
+        // 이름
+        gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 0.2;
+        panel.add(labels[1], gbc);
+        gbc.gridx = 1; gbc.gridy = 1; gbc.weightx = 0.8;
+        txtName = new JTextField(18);
+        txtName.setFont(new Font("맑은 고딕", Font.PLAIN, 16));
+        txtName.setPreferredSize(new Dimension(180, 36));
+        panel.add(txtName, gbc);
+
+        // 비밀번호
+        gbc.gridx = 0; gbc.gridy = 2; gbc.weightx = 0.2;
+        panel.add(labels[2], gbc);
+        gbc.gridx = 1; gbc.gridy = 2; gbc.weightx = 0.8;
+        txtPw = new JTextField(18);
+        txtPw.setFont(new Font("맑은 고딕", Font.PLAIN, 16));
+        txtPw.setPreferredSize(new Dimension(180, 36));
+        panel.add(txtPw, gbc);
+
+        // 권한
+        gbc.gridx = 0; gbc.gridy = 3; gbc.weightx = 0.2;
+        panel.add(labels[3], gbc);
+        gbc.gridx = 1; gbc.gridy = 3; gbc.weightx = 0.8;
         String[] roles = {"Manager", "CSR", "Customer"};
         cmbRole = new JComboBox<>(roles);
-        panel.add(cmbRole);
+        cmbRole.setFont(new Font("맑은 고딕", Font.PLAIN, 16));
+        cmbRole.setPreferredSize(new Dimension(180, 36));
+        panel.add(cmbRole, gbc);
 
-        panel.add(new JLabel("전화번호:"));
-        txtPhone = new JTextField(10);
-        panel.add(txtPhone);
+        // 전화번호
+        gbc.gridx = 0; gbc.gridy = 4; gbc.weightx = 0.2;
+        panel.add(labels[4], gbc);
+        gbc.gridx = 1; gbc.gridy = 4; gbc.weightx = 0.8;
+        txtPhone = new JTextField(18);
+        txtPhone.setFont(new Font("맑은 고딕", Font.PLAIN, 16));
+        txtPhone.setPreferredSize(new Dimension(180, 36));
+        panel.add(txtPhone, gbc);
 
         // 버튼 패널
-        JPanel btnPanel = new JPanel(new GridLayout(1, 3, 5, 0));
+        gbc.gridx = 0; gbc.gridy = 5; gbc.weightx = 0.2;
+        JLabel opLabel = new JLabel("작업:");
+        opLabel.setFont(new Font("맑은 고딕", Font.PLAIN, 15));
+        opLabel.setForeground(navy);
+        panel.add(opLabel, gbc);
+
+        gbc.gridx = 1; gbc.gridy = 5; gbc.weightx = 0.8;
+        JPanel btnPanel = new JPanel(new GridLayout(1, 3, 16, 0));
+        btnPanel.setBackground(Color.WHITE);
         JButton btnAdd = new JButton("추가");
         JButton btnDelete = new JButton("삭제");
         JButton btnModify = new JButton("수정");
-        
+        JButton[] btns = {btnAdd, btnDelete, btnModify};
+        for (JButton b : btns) {
+            b.setBackground(navy);
+            b.setForeground(Color.WHITE);
+            b.setFont(new Font("맑은 고딕", Font.BOLD, 17));
+            b.setFocusPainted(false);
+            b.setPreferredSize(new Dimension(90, 40));
+        }
         btnAdd.addActionListener(e -> handleAddUser());
         btnDelete.addActionListener(e -> handleDeleteUser(e));
         btnModify.addActionListener(e -> handleModifyUser());
-        
         btnPanel.add(btnAdd);
         btnPanel.add(btnDelete);
         btnPanel.add(btnModify);
-        
-        // 마지막 행에 버튼 배치 (Grid Layout 특성상 컴포넌트로 추가)
-        panel.add(new JLabel("작업:")); 
-        panel.add(btnPanel);
+        panel.add(btnPanel, gbc);
 
         return panel;
     }

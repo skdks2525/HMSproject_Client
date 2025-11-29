@@ -43,79 +43,82 @@ public class MenuSalesReportPanel extends JPanel {
      */
     public MenuSalesReportPanel() {
         setLayout(new BorderLayout());
-        // 상단 입력 패널: 기간 입력, 조회 버튼, 안내 메시지, 저장/인쇄 버튼
-        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 8));
-        topPanel.add(new JLabel("시작일 (yyyy-MM-dd): "));
+        setBackground(Color.WHITE);
+
+        // 상단 제목/뒤로가기 패널
+        // 상단 제목/뒤로가기 패널 제거
+
+        // 기존 northWrap(검색/카드) 아래로 내림
+        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 16));
+        topPanel.setBackground(Color.WHITE);
+        JLabel lblStart = new JLabel("시작일 (yyyy-MM-dd): ");
+        lblStart.setFont(new Font("맑은 고딕", Font.PLAIN, 14));
+        topPanel.add(lblStart);
         startDateField = new JTextField(10);
+        startDateField.setFont(new Font("맑은 고딕", Font.PLAIN, 14));
         topPanel.add(startDateField);
-        topPanel.add(new JLabel("~ 종료일 (yyyy-MM-dd): "));
+        JLabel lblEnd = new JLabel("~ 종료일 (yyyy-MM-dd): ");
+        lblEnd.setFont(new Font("맑은 고딕", Font.PLAIN, 14));
+        topPanel.add(lblEnd);
         endDateField = new JTextField(10);
+        endDateField.setFont(new Font("맑은 고딕", Font.PLAIN, 14));
         topPanel.add(endDateField);
         searchButton = new JButton("조회");
+        searchButton.setBackground(new Color(10, 48, 87));
+        searchButton.setForeground(Color.WHITE);
+        searchButton.setFont(new Font("맑은 고딕", Font.BOLD, 15));
+        searchButton.setFocusPainted(false);
         topPanel.add(searchButton);
         infoLabel = new JLabel();
+        infoLabel.setFont(new Font("맑은 고딕", Font.PLAIN, 13));
+        infoLabel.setForeground(new Color(200, 0, 0));
         topPanel.add(infoLabel);
-        JButton saveButton = new JButton("저장");
         JButton printButton = new JButton("인쇄");
-        topPanel.add(saveButton);
+        printButton.setBackground(new Color(10, 48, 87));
+        printButton.setForeground(Color.WHITE);
+        printButton.setFont(new Font("맑은 고딕", Font.BOLD, 15));
+        printButton.setFocusPainted(false);
+        printButton.setPreferredSize(new Dimension(90, 36));
         topPanel.add(printButton);
 
-        // 상단 카드: 총 매출, 일평균 매출
         JPanel cards = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 8));
+        cards.setBackground(Color.WHITE);
         totalSalesLabel = new JLabel("총 매출: ₩0");
-        totalSalesLabel.setFont(totalSalesLabel.getFont().deriveFont(14f));
+        totalSalesLabel.setFont(new Font("맑은 고딕", Font.BOLD, 15));
+        totalSalesLabel.setForeground(new Color(10, 48, 87));
         totalSalesLabel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(220,220,220)),
-            BorderFactory.createEmptyBorder(8,12,8,12)));
+            BorderFactory.createLineBorder(new Color(10, 48, 87)),
+            BorderFactory.createEmptyBorder(8,16,8,16)));
         avgSalesLabel = new JLabel("일 평균 매출: ₩0");
-        avgSalesLabel.setFont(avgSalesLabel.getFont().deriveFont(14f));
+        avgSalesLabel.setFont(new Font("맑은 고딕", Font.BOLD, 15));
+        avgSalesLabel.setForeground(new Color(10, 48, 87));
         avgSalesLabel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(220,220,220)),
-            BorderFactory.createEmptyBorder(8,12,8,12)));
+            BorderFactory.createLineBorder(new Color(10, 48, 87)),
+            BorderFactory.createEmptyBorder(8,16,8,16)));
         cards.add(totalSalesLabel);
         cards.add(avgSalesLabel);
 
         JPanel northWrap = new JPanel(new BorderLayout());
+        northWrap.setBackground(Color.WHITE);
         northWrap.add(topPanel, BorderLayout.NORTH);
         northWrap.add(cards, BorderLayout.CENTER);
-        add(northWrap, BorderLayout.NORTH);
+        add(northWrap, BorderLayout.PAGE_START);
 
         tableModel = new DefaultTableModel(new Object[]{"날짜", "매출", "최다판매메뉴"}, 0);
         table = new JTable(tableModel);
+        table.setFont(new Font("맑은 고딕", Font.PLAIN, 14));
+        table.setRowHeight(28);
+        table.getTableHeader().setFont(new Font("맑은 고딕", Font.BOLD, 14));
+        table.getTableHeader().setBackground(new Color(230, 236, 245));
+        table.getTableHeader().setForeground(new Color(10, 48, 87));
         JScrollPane scrollPane = new JScrollPane(table);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder(12, 18, 12, 18));
         add(scrollPane, BorderLayout.CENTER);
 
         searchButton.addActionListener(this::handleSearch);
         setDefaultDates();
 
-        // 저장 기능: 사용자가 직접 지정한 경로로 내보내기
-        saveButton.addActionListener(e -> {
-            JFileChooser chooser = new JFileChooser();
-            if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
-                try (java.io.PrintWriter pw = new java.io.PrintWriter(chooser.getSelectedFile())) {
-                    // 헤더
-                    for (int i = 0; i < table.getColumnCount(); i++) {
-                        pw.print(table.getColumnName(i));
-                        if (i < table.getColumnCount() - 1) pw.print(",");
-                    }
-                    pw.println();
-                    // 데이터
-                    for (int r = 0; r < table.getRowCount(); r++) {
-                        for (int c = 0; c < table.getColumnCount(); c++) {
-                            pw.print(table.getValueAt(r, c));
-                            if (c < table.getColumnCount() - 1) pw.print(",");
-                        }
-                        pw.println();
-                    }
-                    // 요약 정보
-                    pw.println();
-                    pw.println("총 매출: " + totalSalesLabel.getText().replace("총 매출: ", ""));
-                    pw.println("일 평균 매출: " + avgSalesLabel.getText().replace("일 평균 매출: ", ""));
-                } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(this, "저장 실패: " + ex.getMessage());
-                }
-            }
-        });
+        // 저장 버튼/기능 제거
 
         // 인쇄 기능: 요약+표 전체 인쇄 (Printable 구현)
         printButton.addActionListener(e -> {
@@ -135,7 +138,6 @@ public class MenuSalesReportPanel extends JPanel {
                     y += 22;
                     g2.drawString(avgSalesLabel.getText(), 20, y);
                     y += 30;
-                    // 표 인쇄 (JTable.print() 활용)
                     g2.translate(0, y);
                     table.print(graphics);
                     return java.awt.print.Printable.PAGE_EXISTS;

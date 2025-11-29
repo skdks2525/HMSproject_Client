@@ -14,18 +14,30 @@ public class CurrentOccupancyPanel extends JPanel {
 
     public CurrentOccupancyPanel() {
         setLayout(new BorderLayout());
-        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 8));
-        refreshButton = new JButton("새로고침");
-        topPanel.add(new JLabel("오늘 투숙 중인 객실"));
-        topPanel.add(refreshButton);
-        infoLabel = new JLabel();
-        topPanel.add(infoLabel);
-        add(topPanel, BorderLayout.NORTH);
+        setBackground(Color.WHITE);
+        Color navy = new Color(10, 48, 87);
+        Font titleFont = new Font("맑은 고딕", Font.BOLD, 18);
+        Font btnFont = new Font("맑은 고딕", Font.BOLD, 14);
+
+        // 상단 제목/뒤로가기 패널 제거
 
         model = new DefaultTableModel(new String[]{"객실번호", "예약ID", "체크인", "체크아웃", "인원"}, 0);
         table = new JTable(model);
-        add(new JScrollPane(table), BorderLayout.CENTER);
+        table.setFont(new Font("맑은 고딕", Font.PLAIN, 14));
+        table.getTableHeader().setFont(new Font("맑은 고딕", Font.BOLD, 14));
+        table.getTableHeader().setBackground(navy);
+        table.getTableHeader().setForeground(Color.WHITE);
+        table.setRowHeight(28);
+        JScrollPane tableScroll = new JScrollPane(table);
+        tableScroll.setBorder(BorderFactory.createEmptyBorder(12,12,12,12));
+        add(tableScroll, BorderLayout.CENTER);
 
+        infoLabel = new JLabel();
+        refreshButton = new JButton("새로고침");
+        refreshButton.setBackground(navy);
+        refreshButton.setForeground(Color.WHITE);
+        refreshButton.setFont(btnFont);
+        refreshButton.setFocusPainted(false);
         refreshButton.addActionListener(this::handleRefresh);
         fetchAndFillTable();
     }
