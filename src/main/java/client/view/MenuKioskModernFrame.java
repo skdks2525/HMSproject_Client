@@ -1,11 +1,28 @@
 package client.view;
-import client.net.NetworkService;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.GridLayout;
 import java.util.ArrayList;
-import client.model.Menu;
+
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.DefaultListModel;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.SwingConstants;
+
 import client.model.Cart;
+import client.model.Menu;
+import client.net.NetworkService;
 
 
 /**
@@ -124,7 +141,7 @@ public class MenuKioskModernFrame extends JFrame {
         payButton.setForeground(Color.WHITE);
         payButton.setFont(new Font("맑은 고딕", Font.BOLD, 15));
         payButton.setFocusPainted(false);
-        payButton.addActionListener(e -> handlePay());
+        payButton.addActionListener(e -> showPaymentOptions());
         cartPanel.add(Box.createVerticalStrut(10));
         cartPanel.add(payButton);
 
@@ -277,8 +294,32 @@ public class MenuKioskModernFrame extends JFrame {
     }
 
 
-    // 결제 버튼 동작
-    private void handlePay() {
+    // 결제 옵션 선택 대화상자
+    private void showPaymentOptions() {
+        if (cart.getItems().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "장바구니가 비어있습니다.");
+            return;
+        }
+
+        String[] options = {"지금 결제", "나중에 결제 (체크아웃 시)"};
+        int choice = JOptionPane.showOptionDialog(this,
+            "결제 방식을 선택하세요.",
+            "결제 옵션",
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.QUESTION_MESSAGE,
+            null,
+            options,
+            options[0]);
+
+        if (choice == 0) {
+            handleImmediatePay();
+        } else if (choice == 1) {
+            handleDeferredPay();
+        }
+    }
+
+    // 지금 결제 (즉시 결제)
+    private void handleImmediatePay() {
         if (cart.getItems().isEmpty()) {
             JOptionPane.showMessageDialog(this, "장바구니가 비어있습니다.");
             return;
@@ -288,6 +329,23 @@ public class MenuKioskModernFrame extends JFrame {
             String req = String.format("ORDER_MENU:%s:%d:%s:%s", userId, cart.getTotalPrice(), "Paid", cart.getFoodNamesString());
             NetworkService.getInstance().sendRequest(req);
             JOptionPane.showMessageDialog(this, "요금이 추가되었습니다.");
+            cart.clear();
+            updateCartPanel();
+            loadMenuCards(); // 결제 후 재고 반영
+        }
+    }
+
+    // 나중에 결제 (체크아웃 시)
+    private void handleDeferredPay() {
+        if (cart.getItems().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "장바구니가 비어있습니다.");
+            return;
+        }
+        int result = JOptionPane.showConfirmDialog(this, "체크아웃 시 결제하시겠습니까?", "나중 결제 확인", JOptionPane.YES_NO_OPTION);
+        if (result == JOptionPane.YES_OPTION) {
+            String req = String.format("ORDER_MENU:%s:%d:%s:%s", userId, cart.getTotalPrice(), "Unpaid", cart.getFoodNamesString());
+            NetworkService.getInstance().sendRequest(req);
+            JOptionPane.showMessageDialog(this, "주문이 저장되었습니다. 체크아웃 시 결제하세요.");
             cart.clear();
             updateCartPanel();
             loadMenuCards(); // 결제 후 재고 반영

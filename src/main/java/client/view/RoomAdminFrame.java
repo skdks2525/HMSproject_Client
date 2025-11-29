@@ -404,7 +404,17 @@ public class RoomAdminFrame extends JFrame {
                 logMessage.append("-----------------------------------------\n");
             }
             
-            logMessage.append(String.format("\n총 %d원\n", unpaidTotal));
+            // Late Checkout 추가 요금 확인 (오전 11시 이후)
+            java.time.LocalTime now = java.time.LocalTime.now();
+            int lateCheckoutFee = 0;
+            if (now.getHour() >= 11) {
+                lateCheckoutFee = 100000;
+                logMessage.append("Late Checkout 추가요금(100,000원)\n");
+            }
+            
+            int totalAmount = unpaidTotal + lateCheckoutFee;
+            logMessage.append("-----------------------------------------\n");
+            logMessage.append(String.format("총 %d원\n", totalAmount));
 
             // 청구 내역을 보여주고 결제 여부를 묻기 (금액이 0이어도 항상 물음)
             String paymentMsg = logMessage.toString() + "\n결제하시겠습니까?";
@@ -416,19 +426,10 @@ public class RoomAdminFrame extends JFrame {
             }
 
             // 결제를 진행하는 경우
-            if (unpaidTotal > 0) {
-                // 간단한 카드정보 입력 폼 (대화상자 연속 입력)
-                String cardNum = JOptionPane.showInputDialog(this, "카드번호를 입력하세요:");
-                if (cardNum == null) return;
-                String cvc = JOptionPane.showInputDialog(this, "CVC를 입력하세요:");
-                if (cvc == null) return;
-                String expiry = JOptionPane.showInputDialog(this, "유효기간(MM/YY) 입력:");
-                if (expiry == null) return;
-                String cardPw = JOptionPane.showInputDialog(this, "카드 비밀번호(두자리) 입력:");
-                if (cardPw == null) return;
-
-                // 서버에 결제 요청 (UPDATE_PAYMENT:ResID:Method:Card:CVC:Expiry:PW:Amount)
-                String payReq = String.format("UPDATE_PAYMENT:%s:Card:%s:%s:%s:%s:%d", selectedResId, cardNum, cvc, expiry, cardPw, unpaidTotal);
+            if (totalAmount > 0) {
+                // 서버에 결제 요청: 이미 저장된 결제정보(payments.csv)를 사용하도록 요청
+                // 프로토콜 토큰 수(전체 8개)를 맞추기 위해 빈 필드를 포함합니다.
+                String payReq = String.format("UPDATE_PAYMENT:%s:Stored:::::%d", selectedResId, totalAmount);
                 String payRes = NetworkService.getInstance().sendRequest(payReq);
                 if ("PAYMENT_SUCCESS".equals(payRes)) {
                     // 결제 성공 시 퇴실 처리
