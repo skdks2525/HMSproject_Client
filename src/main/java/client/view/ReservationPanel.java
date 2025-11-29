@@ -1,16 +1,36 @@
 package client.view;
 
-import client.net.NetworkService;
-import com.toedter.calendar.JDateChooser; 
-
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
+import javax.swing.ButtonModel;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JScrollPane;
+import javax.swing.JSpinner;
+import javax.swing.JTextField;
+import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingConstants;
+import javax.swing.border.EmptyBorder;
+
+import com.toedter.calendar.JDateChooser;
+
+import client.net.NetworkService;
 
 public class ReservationPanel extends JPanel {
 
@@ -207,7 +227,7 @@ private JPanel createRoomSelectionPanel() {
         String roomNum = info[0];
         String type = info[1];
         String price = info[2];
-        // String capacity = info[3];
+        String capacity = info[3];
         String desc = info[4];
         String status = info[5]; // BOOKED or AVAILABLE
 
@@ -236,14 +256,14 @@ private JPanel createRoomSelectionPanel() {
         JPanel infoP = new JPanel(new GridLayout(2, 1));
         infoP.setOpaque(false);
         
-        JLabel lblTitle = new JLabel(type + " Room (" + price + "원)");
+        JLabel lblTitle = new JLabel(type + " Room (" + price + "원) | 최대 인원수: " + capacity + "명");
         lblTitle.setFont(new Font("맑은 고딕", Font.BOLD, 16));
         
         // 상태 메시지
-        String statusText = isBooked ? "⛔ 이미 예약된 객실입니다." : "✅ " + desc;
+        String statusText = isBooked ? "이미 예약된 객실입니다." : " " + desc;
         JLabel lblDesc = new JLabel(statusText);
         lblDesc.setFont(new Font("맑은 고딕", Font.PLAIN, 14));
-        if (isBooked) lblDesc.setForeground(Color.RED);
+        if (isBooked) lblDesc.setForeground(Color.black);
         else lblDesc.setForeground(Color.DARK_GRAY);
 
         infoP.add(lblTitle);

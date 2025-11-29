@@ -5,6 +5,8 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 
 public class MyReservationPanel extends JPanel {
 
@@ -16,7 +18,6 @@ public class MyReservationPanel extends JPanel {
         this.loggedInName = userName;
         initComponents();
         
-        // ID 자동 조회
         if (loggedInName != null && !loggedInName.isEmpty()) {
             txtSearchName.setText(loggedInName);
             loadMyReservations();
@@ -28,10 +29,10 @@ public class MyReservationPanel extends JPanel {
     }
 
     private void initComponents() {
+        // ... (기존 GUI 코드 100% 동일 유지) ...
         setLayout(new BorderLayout());
         setBackground(Color.WHITE);
 
-        // 상단 검색 패널
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 20));
         topPanel.setBackground(Color.WHITE);
         
@@ -40,7 +41,7 @@ public class MyReservationPanel extends JPanel {
         
         txtSearchName = new JTextField(10);
         JButton btnSearch = new JButton("조회");
-        btnSearch.setBackground(new Color(0, 0, 0)); // 검정색으로 했음
+        btnSearch.setBackground(new Color(0, 0, 0));
         btnSearch.setForeground(Color.WHITE);
         btnSearch.setFocusPainted(false);
         btnSearch.addActionListener(e -> loadMyReservations());
@@ -52,7 +53,6 @@ public class MyReservationPanel extends JPanel {
         
         add(topPanel, BorderLayout.NORTH);
 
-        // 2. 중앙 패널
         listPanel = new JPanel();
         listPanel.setLayout(new BoxLayout(listPanel, BoxLayout.Y_AXIS));
         listPanel.setBackground(new Color(245, 245, 245));
@@ -65,7 +65,7 @@ public class MyReservationPanel extends JPanel {
         add(scrollPane, BorderLayout.CENTER);
     }
 
-    // 예약 목록 기능
+    // 예약 목록 조회
     private void loadMyReservations() {
         String name = txtSearchName.getText().trim();
         if (name.isEmpty()) {
@@ -73,12 +73,10 @@ public class MyReservationPanel extends JPanel {
             return;
         }
 
-        // 기존 목록 지우기
         listPanel.removeAll();
         listPanel.revalidate();
         listPanel.repaint();
 
-        // 서버에 리스트 요청
         String response = NetworkService.getInstance().sendRequest("GET_RES_BY_NAME:" + name);
 
         if (response != null && response.startsWith("RES_LIST:")) {
@@ -87,19 +85,40 @@ public class MyReservationPanel extends JPanel {
             if (!data.isEmpty()) {
                 String[] list = data.split("\\|");
                 for (String item : list) {
- 
+                    if (item.trim().isEmpty()) continue;
                     String[] info = item.split(","); 
                     
-                    if (info.length >= 9) { 
+                    if (info.length >= 10) { 
+                        String statusVal = info[7].trim();
+                        
+                        int price = 0;
+                        int capacity = 2; // 기본 정원수를 2로 지정
+                        
+                        if (info.length >= 13) {
+                            try { 
+                                price = Integer.parseInt(info[11].trim()); 
+                                capacity = Integer.parseInt(info[12].trim()); 
+                            } catch(Exception e) {}
+                        }
+
+                        // createReservationCard에 'capacity' 정보도 넘겨줍니다.
                         JPanel card = createReservationCard(
-                            info[0].trim(), info[1].trim(), info[2].trim(), info[3].trim(),
-                            info[4].trim(), info[5].trim(), info[6].trim(), info[7].trim(),
-                            info[8].trim());
+                            info[0].trim(), // resId
+                            info[1].trim(), // roomNum
+                            info[2].trim(), // name
+                            info[3].trim(), // in
+                            info[4].trim(), // out
+                            info[5].trim(), // guests
+                            info[6].trim(), // phone
+                            statusVal,      
+                            price,          // 가격
+                            capacity        // 정원수
+                        );
+                        
                         listPanel.add(card);
-                        listPanel.add(Box.createRigidArea(new Dimension(0, 10))); // 간격 추가
+                        listPanel.add(Box.createRigidArea(new Dimension(0, 10)));
                     }
                 }
-                // 화면 갱신
                 listPanel.revalidate();
                 listPanel.repaint();
             } else {
@@ -123,8 +142,8 @@ public class MyReservationPanel extends JPanel {
         listPanel.repaint();
     }
 
-    // 예약 카드 UI 생성
-    private JPanel createReservationCard(String resId, String roomNum, String name, String inDate, String outDate, String guests, String phone, String status, String paymentInfo) {
+    // [수정] pricePerNight 인자 추가됨
+    private JPanel createReservationCard(String resId, String roomNum, String name, String inDate, String outDate, String guests, String phone, String status, int pricePerNight, int capacity) {
         JPanel card = new JPanel(new BorderLayout(15, 15));
         card.setBackground(Color.WHITE);
         card.setBorder(BorderFactory.createCompoundBorder(
@@ -141,38 +160,27 @@ public class MyReservationPanel extends JPanel {
         lblIcon.setForeground(new Color(0, 51, 102));
         card.add(lblIcon, BorderLayout.WEST);
         
-        // 예약 상세 정보
         JPanel infoP = new JPanel(new GridLayout(3, 1));
         infoP.setOpaque(false);
         
-        // 결제 상태에 따라 색이 변함
-
         JLabel lblName = new JLabel();
         lblName.setFont(new Font("맑은 고딕", Font.BOLD, 16));
         
-        switch(status){
-            case "Unpaid":           
-                lblName.setText(name + "님 예약 (미결제 - 18시 마감)");
-                lblName.setForeground(Color.RED);
-                break;
-                
-            case "Confirmed":     
-                lblName.setText(name + "님 예약 (예약 확정)");
-                lblName.setForeground(new Color(0, 153, 51)); // 진한 초록
-                break;
-                
-            case "CheckedIn":
-                lblName.setText(name + "님 (투숙 중)");
-                lblName.setForeground(Color.BLUE);
-                break;
-                
-            case "CheckedOut":
-                lblName.setText(name + "님 (체크아웃)");
-                lblName.setForeground(Color.GRAY);
-                break;
-                
-            default:
-                lblName.setText(name + "님 예약 (" + status + ")");
+        // [수정] 대소문자 무시 처리 (서버 UnPaid 대응)
+        if ("Unpaid".equalsIgnoreCase(status)) {
+            lblName.setText(name + "님 예약 (미결제 - 결제 필요)");
+            lblName.setForeground(Color.RED);
+        } else if ("Confirmed".equalsIgnoreCase(status)) {
+            lblName.setText(name + "님 예약 (예약 확정)");
+            lblName.setForeground(new Color(0, 153, 51));
+        } else if ("CheckedIn".equalsIgnoreCase(status)) {
+            lblName.setText(name + "님 (투숙 중)");
+            lblName.setForeground(Color.BLUE);
+        } else if ("CheckedOut".equalsIgnoreCase(status)) {
+            lblName.setText(name + "님 (체크아웃)");
+            lblName.setForeground(Color.GRAY);
+        } else {
+            lblName.setText(name + "님 예약 (" + status + ")");
         }
         
         JLabel lblDate = new JLabel(inDate + " ~ " + outDate);
@@ -188,30 +196,30 @@ public class MyReservationPanel extends JPanel {
         infoP.add(lblPhone);
         card.add(infoP, BorderLayout.CENTER);
 
-        // 결제 & 취소 패널
+        // 결제 & 취소 버튼 패널
         JPanel btnPanel = new JPanel(new GridLayout(2, 1, 0, 5));
         btnPanel.setOpaque(false);
 
-        // 결제 버튼
-        if ("Unpaid".equals(status)) {
+        // [핵심] Unpaid일 때만 결제 버튼 보임
+        if ("Unpaid".equalsIgnoreCase(status)) {
             JButton btnPay = new JButton("결제수단 등록");
-            btnPay.setBackground(new Color(100, 150, 255)); // 파란색
+            btnPay.setBackground(new Color(100, 150, 255));
             btnPay.setForeground(Color.WHITE);
             btnPay.setFocusPainted(false);
             btnPay.setFont(new Font("맑은 고딕", Font.BOLD, 12));
-            btnPay.addActionListener(e -> requestPayment(resId));
+            
+            // 클릭 시 requestPayment 호출 (가격 정보 전달)
+            btnPay.addActionListener(e -> requestPayment(resId, inDate, outDate, guests, pricePerNight, capacity));
             btnPanel.add(btnPay);
         } else {
-            // 결제수단 등록 완료 시 '완료' 표시
             JLabel lblDone = new JLabel("등록 완료", SwingConstants.CENTER);
             lblDone.setFont(new Font("맑은 고딕", Font.BOLD, 12));
             lblDone.setForeground(new Color(0, 153, 51));
             btnPanel.add(lblDone);
         }
 
-        // 취소 버튼
         JButton btnCancel = new JButton("예약 취소");
-        btnCancel.setBackground(new Color(255, 235, 235)); // 연한 빨강
+        btnCancel.setBackground(new Color(255, 235, 235));
         btnCancel.setForeground(Color.RED);
         btnCancel.setFocusPainted(false);
         btnCancel.setFont(new Font("맑은 고딕", Font.BOLD, 12));
@@ -219,14 +227,45 @@ public class MyReservationPanel extends JPanel {
         btnPanel.add(btnCancel);
 
         card.add(btnPanel, BorderLayout.EAST);
-
         return card;
     }
 
-    private void requestPayment(String resId) {
+    /**
+     * [수정] 결제 요청: 카드 정보 입력 -> 금액 포함하여 서버 전송
+     */
+    private void requestPayment(String resId, String inDate, String outDate, String guestsStr, int pricePerNight, int capacity) {
+        
+        // 결제 금액 계산 (박수 * 1박요금)
+        long totalAmount = 0;
+        try {
+            // 1. 날짜 차이(연박) 계산
+            LocalDate d1 = LocalDate.parse(inDate);
+            LocalDate d2 = LocalDate.parse(outDate);
+            long nights = ChronoUnit.DAYS.between(d1, d2);
+            if (nights < 1) nights = 1;
+
+            // 2. 인원 수 파싱
+            int currentGuests = Integer.parseInt(guestsStr);
+            
+            // 3. [핵심] 초과 인원 비용 계산
+            int extraCost = 0;
+            if (currentGuests > capacity) {
+                // 1인당 20,000원 * 초과인원
+                extraCost = (currentGuests - capacity) * 20000;
+            }
+
+            // 4. 총액 계산: (기본박비 + 초과비용) * 연박일수
+            totalAmount = (pricePerNight + extraCost) * nights;
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "비용 계산 중 오류 발생: " + e.getMessage());
+            return;
+        }
+
+        // 2. 결제 수단 선택 팝업
         Object[] options = {"신용카드", "계좌이체", "무통장입금"};
         int choice = JOptionPane.showOptionDialog(this,
-                "결제 수단을 선택해주세요.",
+                "결제 수단을 선택해주세요.\n결제 금액: " + String.format("%,d원", totalAmount), // 금액 안내
                 "결제 수단 선택",
                 JOptionPane.YES_NO_CANCEL_OPTION,
                 JOptionPane.QUESTION_MESSAGE,
@@ -235,14 +274,12 @@ public class MyReservationPanel extends JPanel {
                 options[0]);
 
         if (choice == -1) return;
-
         String method = (String) options[choice];
         
-        // 서버로 보낼 데이터 변수들
         String cardNum = "0", cvc = "0", expiry = "0", pw = "0";
 
         if ("신용카드".equals(method)) {
-            // 여긴 신용카드 정보입력 패널
+            // [기존 UI] 신용카드 입력
             JPanel panel = new JPanel(new GridLayout(4, 2, 5, 5));
             JTextField txtNum = new JTextField();
             JTextField txtCVC = new JTextField();
@@ -266,32 +303,30 @@ public class MyReservationPanel extends JPanel {
                 JOptionPane.showMessageDialog(this, "필수 정보를 입력해주세요.");
                 return;
             }
-            
         } else {
-            // [계좌이체 / 무통장입금] 입금자명만 입력
+            // [기존 UI] 계좌이체 입력
             String sender = JOptionPane.showInputDialog(this, "입금자명을 입력해주세요:", method, JOptionPane.QUESTION_MESSAGE);
             if (sender == null || sender.trim().isEmpty()) return;
-            
-            cardNum = sender; // 카드번호 자리에 입금자명 저장
-            // 나머지는 "0"으로 채워서 서버 포맷 맞춤
+            cardNum = sender; 
         }
 
-        // 서버 전송
-        String request = String.format("UPDATE_PAYMENT:%s:%s:%s:%s:%s:%s", 
-                resId, method, cardNum, cvc, expiry, pw);
+        // 3. [핵심 수정] 서버 전송 - 금액(totalAmount)을 맨 뒤에 추가
+        // 형식: UPDATE_PAYMENT:ID:Method:Card:CVC:Expiry:PW:Amount
+        // (주의: 서버 ClientHandler의 UPDATE_PAYMENT 케이스에서 8개 토큰을 받도록 수정되어 있어야 함)
+        String request = String.format("UPDATE_PAYMENT:%s:%s:%s:%s:%s:%s:%d", 
+                resId, method, cardNum, cvc, expiry, pw, totalAmount);
         
         System.out.println("[Client] 결제 요청 전송: " + request);
         String response = NetworkService.getInstance().sendRequest(request);
         
-        if ("PAYMENT_SUCCESS".equals(response)) {
-            JOptionPane.showMessageDialog(this, "결제가 완료되었습니다!\n(" + method + ")");
+        if (response != null && response.startsWith("PAYMENT_SUCCESS")) { // 서버 응답 메시지에 맞춤
+            JOptionPane.showMessageDialog(this, "결제가 완료되었습니다!\n(" + method + ": " + totalAmount + "원)");
             loadMyReservations();
         } else {
             JOptionPane.showMessageDialog(this, "결제 실패: " + response, "오류", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    // 예약 취소 기능
     private void requestCancel(String resId) {
         int confirm = JOptionPane.showConfirmDialog(this, 
                 "예약(ID: " + resId + ")을 정말 취소하시겠습니까?", "취소 확인", JOptionPane.YES_NO_OPTION);

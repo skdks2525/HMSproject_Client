@@ -1,14 +1,33 @@
 package client.view;
 
-import client.net.NetworkService;
-import com.toedter.calendar.JDateChooser; // 달력 라이브러리
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.TitledBorder;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color; // 달력 라이브러리
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.TitledBorder;
+
+import com.toedter.calendar.JDateChooser;
+
+import client.net.NetworkService;
 
 public class RoomAdminFrame extends JFrame {
 
@@ -45,7 +64,7 @@ public class RoomAdminFrame extends JFrame {
         setLayout(new BorderLayout(10, 10));
         getContentPane().setBackground(new Color(240, 240, 240));
 
-        // 1. 상단 패널 (제목 + [날짜선택])
+        // 상단 패널 (제목 + [날짜선택])
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setBackground(Color.WHITE);
         topPanel.setBorder(new EmptyBorder(15, 20, 15, 20));
@@ -54,7 +73,7 @@ public class RoomAdminFrame extends JFrame {
         lblTitle.setFont(new Font("맑은 고딕", Font.BOLD, 28));
         lblTitle.setForeground(new Color(0, 102, 51)); 
         
-        // [복구됨] 날짜 선택 패널
+        // 날짜 선택 패널
         JPanel datePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         datePanel.setBackground(Color.WHITE);
         
@@ -76,7 +95,7 @@ public class RoomAdminFrame extends JFrame {
         
         add(topPanel, BorderLayout.NORTH);
 
-        // 2. 좌측: 객실 현황판
+        // 좌측: 객실 현황판
         roomGridPanel = new JPanel(new GridLayout(0, 4, 10, 10)); 
         roomGridPanel.setBackground(Color.WHITE);
         roomGridPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
@@ -89,14 +108,14 @@ public class RoomAdminFrame extends JFrame {
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         add(scrollPane, BorderLayout.CENTER);
 
-        // 3. 우측: 상세 정보 패널
+        // 우측: 상세 정보 패널
         JPanel rightPanel = new JPanel();
         rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
         rightPanel.setPreferredSize(new Dimension(400, 0));
         rightPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
         rightPanel.setBackground(Color.WHITE);
 
-        // 3-1. 객실 정보 (기존 동일)
+        // 객실 정보 (기존 동일)
         JPanel roomInfoPanel = new JPanel(new GridLayout(4, 2, 5, 5));
         roomInfoPanel.setBorder(BorderFactory.createTitledBorder("객실 기본 정보"));
         roomInfoPanel.setBackground(Color.WHITE);
@@ -173,10 +192,10 @@ public class RoomAdminFrame extends JFrame {
         statusPanel.setMaximumSize(new Dimension(1000, 80));
         
         String[] statusOptions = {
-            "상태 선택...", 
+            "상태 선택", 
             "예약 확정", 
             "입실 완료", 
-            "퇴실/청소", 
+            "퇴실 완료",
             "빈 방으로 변경(예약 삭제)"
         };
         cmbForceStatus = new JComboBox<>(statusOptions);
@@ -307,47 +326,153 @@ public class RoomAdminFrame extends JFrame {
         cmbForceStatus.setSelectedIndex(0);
     }
 
-    // --- [기능] 상태 강제 변경 핸들러 ---
+    // 상태 변경 핸들러
     private void handleForceStatusChange(ActionEvent e) {
         if (selectedRoomNum == null) return;
         
         int idx = cmbForceStatus.getSelectedIndex();
-        if (idx <= 0) return; // "선택..." 일 때 무시
+        if (idx <= 0) return; 
+
+        // [Case 1] 빈 방으로 변경 (예약 삭제) -> Index 4
+        if (idx == 4) {
+            if (selectedResId == null || "-".equals(selectedResId)) {
+                JOptionPane.showMessageDialog(this, "삭제할 예약이 없습니다. (이미 빈 방입니다.)");
+                return;
+            }
+            int confirm = JOptionPane.showConfirmDialog(this, "정말 예약을 삭제하고 빈 방으로 만드시겠습니까?", "경고", JOptionPane.YES_NO_OPTION);
+            if (confirm == JOptionPane.YES_OPTION) {
+                NetworkService.getInstance().sendRequest("DELETE_RESERVATION:" + selectedResId);
+                loadRoomData();
+            }
+            return;
+        }
+
+        
+
+        // [Case 3] 예약 상태 변경 (Confirmed, CheckedIn, CheckedOut) -> Index 1, 2, 3
+        // 특별 처리: CheckedOut(퇴실 완료, idx==3)는 메뉴 주문 결제(미결제 확인)를 먼저 요구
+        if (idx == 3) {
+            if (selectedResId == null || "-".equals(selectedResId)) {
+                JOptionPane.showMessageDialog(this, "예약이 없는 방입니다.\n퇴실 처리를 하려면 예약이 있어야 합니다.");
+                return;
+            }
+
+            String guestName = txtGuestName.getText();
+            if (guestName == null || guestName.trim().isEmpty() || "-".equals(guestName)) {
+                JOptionPane.showMessageDialog(this, "예약자 정보가 없습니다. 먼저 예약 정보를 확인하세요.");
+                return;
+            }
+
+            // 서버에 해당 투숙객의 메뉴주문 내역 요청 (입실~퇴실 기간 필터링)
+            String checkInDate = txtCheckInDate.getText();
+            String checkOutDate = txtCheckOutDate.getText();
+            String ordersResp = NetworkService.getInstance().sendRequest("GET_MENU_ORDERS_BY_DATE_RANGE:" + guestName + ":" + checkInDate + ":" + checkOutDate);
+            int unpaidTotal = 0;
+            StringBuilder logMessage = new StringBuilder();
+            logMessage.append("[청구 내역]\n");
+            
+            if (ordersResp != null && ordersResp.startsWith("MENU_ORDERS_DATE:")) {
+                String payload = ordersResp.substring("MENU_ORDERS_DATE:".length());
+                if (!payload.isEmpty()) {
+                    String[] orders = payload.split("\\|");
+                    for (String ord : orders) {
+                        String[] f = ord.split(",");
+                        if (f.length >= 3) {
+                            try {
+                                String foodNames = f[0];
+                                int price = Integer.parseInt(f[1]);
+                                String payment = f[2];
+                                String paymentDisplay = "Paid".equalsIgnoreCase(payment) ? "결제됨" : "미결제";
+                                // 음식명들을 "/" 기준으로 분할하여 각각 줄바꿈으로 표시
+                                String[] foods = foodNames.split("/");
+                                for (String food : foods) {
+                                    logMessage.append(String.format("%s(%s)\n", food.trim(), paymentDisplay));
+                                }
+                                if (!"Paid".equalsIgnoreCase(payment)) unpaidTotal += price;
+                            } catch (NumberFormatException ex) {
+                                // 무시
+                            }
+                        }
+                    }
+                    logMessage.append("-----------------------------------------\n");
+                } else {
+                    logMessage.append("청구 내역 없음\n");
+                    logMessage.append("-----------------------------------------\n");
+                }
+            } else {
+                logMessage.append("청구 내역 없음\n");
+                logMessage.append("-----------------------------------------\n");
+            }
+            
+            logMessage.append(String.format("\n총 %d원\n", unpaidTotal));
+
+            // 청구 내역을 보여주고 결제 여부를 묻기 (금액이 0이어도 항상 물음)
+            String paymentMsg = logMessage.toString() + "\n결제하시겠습니까?";
+            int confirm = JOptionPane.showConfirmDialog(this, paymentMsg, "결제 확인", JOptionPane.YES_NO_OPTION);
+            if (confirm != JOptionPane.YES_OPTION) {
+                // 사용자가 결제를 거부한 경우 아무런 상태 변경 없이 반환
+                JOptionPane.showMessageDialog(this, "퇴실 처리가 취소되었습니다.");
+                return;
+            }
+
+            // 결제를 진행하는 경우
+            if (unpaidTotal > 0) {
+                // 간단한 카드정보 입력 폼 (대화상자 연속 입력)
+                String cardNum = JOptionPane.showInputDialog(this, "카드번호를 입력하세요:");
+                if (cardNum == null) return;
+                String cvc = JOptionPane.showInputDialog(this, "CVC를 입력하세요:");
+                if (cvc == null) return;
+                String expiry = JOptionPane.showInputDialog(this, "유효기간(MM/YY) 입력:");
+                if (expiry == null) return;
+                String cardPw = JOptionPane.showInputDialog(this, "카드 비밀번호(두자리) 입력:");
+                if (cardPw == null) return;
+
+                // 서버에 결제 요청 (UPDATE_PAYMENT:ResID:Method:Card:CVC:Expiry:PW:Amount)
+                String payReq = String.format("UPDATE_PAYMENT:%s:Card:%s:%s:%s:%s:%d", selectedResId, cardNum, cvc, expiry, cardPw, unpaidTotal);
+                String payRes = NetworkService.getInstance().sendRequest(payReq);
+                if ("PAYMENT_SUCCESS".equals(payRes)) {
+                    // 결제 성공 시 퇴실 처리
+                    String co = NetworkService.getInstance().sendRequest("CHECK_OUT:" + selectedResId);
+                    if ("SUCCESS".equals(co)) {
+                        JOptionPane.showMessageDialog(this, "퇴실 처리가 완료되었습니다.");
+                        loadRoomData();
+                    } else {
+                        JOptionPane.showMessageDialog(this, "퇴실 처리 실패: " + co);
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(this, "결제 실패: " + payRes);
+                }
+            } else {
+                // 청구 금액이 없는 경우 카드 입력 없이 바로 퇴실 처리
+                String co = NetworkService.getInstance().sendRequest("CHECK_OUT:" + selectedResId);
+                if ("SUCCESS".equals(co)) {
+                    JOptionPane.showMessageDialog(this, "퇴실 처리가 완료되었습니다.");
+                    loadRoomData();
+                } else {
+                    JOptionPane.showMessageDialog(this, "퇴실 처리 실패: " + co);
+                }
+            }
+
+            return;
+        }
 
         String targetStatus = "";
         switch(idx) {
             case 1: targetStatus = "Confirmed"; break;
             case 2: targetStatus = "CheckedIn"; break;
-            case 3: targetStatus = "CheckedOut"; break;
-            case 4: targetStatus = "Empty"; break;
         }
 
-        // 빈 방으로 만들기 = 예약 삭제
-        if ("Empty".equals(targetStatus)) {
-            if (selectedResId == null || "-".equals(selectedResId)) {
-                JOptionPane.showMessageDialog(this, "이미 빈 방입니다.");
-                return;
-            }
-            int confirm = JOptionPane.showConfirmDialog(this, "정말 방을 비우시겠습니까?\n(현재 예약이 삭제됩니다)", "경고", JOptionPane.YES_NO_OPTION);
-            if (confirm == JOptionPane.YES_OPTION) {
-                NetworkService.getInstance().sendRequest("DELETE_RESERVATION:" + selectedResId);
-                loadRoomData();
-            }
+        if (selectedResId == null || "-".equals(selectedResId)) {
+            JOptionPane.showMessageDialog(this, "예약이 없는 방입니다.\n예약 상태를 변경하려면 먼저 예약을 생성해야 합니다.");
+            return;
+        }
+
+        String res = NetworkService.getInstance().sendRequest("UPDATE_RESERVATION_STATUS:" + selectedResId + ":" + targetStatus);
+        if ("UPDATE_SUCCESS".equals(res)) {
+            JOptionPane.showMessageDialog(this, "예약 상태가 변경되었습니다.");
+            loadRoomData();
         } else {
-            // 상태 변경 (예약이 있어야 가능)
-            if (selectedResId == null || "-".equals(selectedResId)) {
-                JOptionPane.showMessageDialog(this, "예약이 없는 방의 상태를 바꿀 수 없습니다.\n먼저 예약을 생성해주세요.");
-                return;
-            }
-            // 서버 요청: UPDATE_RESERVATION_STATUS:예약ID:새상태
-            String res = NetworkService.getInstance().sendRequest("UPDATE_RESERVATION_STATUS:" + selectedResId + ":" + targetStatus);
-            
-            if ("UPDATE_SUCCESS".equals(res)) {
-                JOptionPane.showMessageDialog(this, "상태가 변경되었습니다.");
-                loadRoomData();
-            } else {
-                JOptionPane.showMessageDialog(this, "변경 실패: " + res);
-            }
+            JOptionPane.showMessageDialog(this, "변경 실패: " + res);
         }
     }
 
