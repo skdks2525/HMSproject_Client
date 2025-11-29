@@ -22,16 +22,52 @@ public class MainFrame extends JFrame {
     // CSR/고객 공통 메뉴
     private final JButton reservationButton;
     private final JButton checkInOutButton;
-    private final JPanel menuPanel;
     private final JButton logoutButton;
     private final JButton menukioskButton;
 
 
     public MainFrame(String userId, String role) {
-        super("호텔 관리 시스템 - " + role); // 창 제목에 권한 표시
+        super("호텔 관리 시스템 - " + role);
         this.userId = userId;
         this.userRole = role;
         this.setLayout(new BorderLayout());
+        Color navy = new Color(10, 48, 87);
+        Color lightBg = new Color(245, 248, 252);
+        Font btnFont = new Font("맑은 고딕", Font.BOLD, 16);
+
+        // --- 상단 로고/타이틀/환영 메시지 영역 ---
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setBackground(Color.WHITE);
+        JLabel logoLabel = new JLabel("🏨", SwingConstants.LEFT);
+        logoLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 38));
+        logoLabel.setBorder(BorderFactory.createEmptyBorder(18, 24, 0, 0));
+        JLabel titleLabel = new JLabel("HMS HOTEL SYSTEM", SwingConstants.LEFT);
+        titleLabel.setFont(new Font("맑은 고딕", Font.BOLD, 28));
+        titleLabel.setForeground(navy);
+        titleLabel.setBorder(BorderFactory.createEmptyBorder(18, 18, 0, 0));
+        JPanel logoTitlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        logoTitlePanel.setBackground(Color.WHITE);
+        logoTitlePanel.add(logoLabel);
+        logoTitlePanel.add(Box.createHorizontalStrut(10));
+        logoTitlePanel.add(titleLabel);
+        topPanel.add(logoTitlePanel, BorderLayout.WEST);
+        JLabel subtitle = new JLabel("호텔 통합 관리 시스템", SwingConstants.LEFT);
+        subtitle.setFont(new Font("맑은 고딕", Font.PLAIN, 16));
+        subtitle.setForeground(new Color(80, 80, 80));
+        subtitle.setBorder(BorderFactory.createEmptyBorder(0, 80, 0, 0));
+        topPanel.add(subtitle, BorderLayout.SOUTH);
+        // 오른쪽 상단에 환영 메시지(작게)
+        JLabel welcomeLabelTop = new JLabel("환영합니다! 현재 권한: " + role);
+        welcomeLabelTop.setFont(new Font("맑은 고딕", Font.PLAIN, 15));
+        welcomeLabelTop.setForeground(new Color(80, 80, 80));
+        welcomeLabelTop.setBorder(BorderFactory.createEmptyBorder(18, 0, 0, 24));
+        JPanel rightPanel = new JPanel(new BorderLayout());
+        rightPanel.setBackground(Color.WHITE);
+        rightPanel.add(welcomeLabelTop, BorderLayout.NORTH);
+        topPanel.add(rightPanel, BorderLayout.EAST);
+        this.add(topPanel, BorderLayout.NORTH);
+
+        // --- 메뉴 버튼 카드 (권한별 배치) ---
         userManagementButton = new JButton("직원/권한 관리");
         systemReportButton = new JButton("식음료 판매 관리");
         menukioskButton = new JButton("식음료 구매");
@@ -40,28 +76,90 @@ public class MainFrame extends JFrame {
         reservationButton = new JButton("예약 및 조회");
         checkInOutButton = new JButton("보고서");
 
-        menuPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 20));
-        
-        menuPanel.add(userManagementButton);
-        menuPanel.add(systemReportButton);
-        menuPanel.add(menukioskButton);
-        menuPanel.add(roomTypeManagementButton);
-        menuPanel.add(reservationButton);
-        menuPanel.add(checkInOutButton);
-        
-        this.add(menuPanel, BorderLayout.NORTH); 
-        
-        JLabel welcomeLabel = new JLabel("환영합니다! 현재 권한: " + role, SwingConstants.CENTER);
-        welcomeLabel.setFont(new Font("맑은 고딕", Font.BOLD, 24));
-        this.add(welcomeLabel, BorderLayout.CENTER);
+        JPanel menuCardPanel;
+        if (role.equalsIgnoreCase("Customer")) {
+            menuCardPanel = new JPanel();
+            menuCardPanel.setBackground(lightBg);
+            menuCardPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createEmptyBorder(60, 0, 60, 0),
+                BorderFactory.createLineBorder(new Color(220, 220, 220), 1, true)));
+            menuCardPanel.setLayout(new GridLayout(1, 2, 40, 0)); // 1행 2열, 넓은 간격
+            JButton[] customerBtns = {reservationButton, menukioskButton};
+            for (JButton btn : customerBtns) {
+                btn.setBackground(navy);
+                btn.setForeground(Color.WHITE);
+                btn.setFont(btnFont.deriveFont(Font.BOLD, 20f));
+                btn.setFocusPainted(false);
+                btn.setPreferredSize(new Dimension(240, 100));
+                btn.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(new Color(220, 220, 220), 1, true),
+                    BorderFactory.createEmptyBorder(18, 0, 18, 0)));
+                menuCardPanel.add(btn);
+            }
+        } else if (role.equalsIgnoreCase("CSR")) {
+            menuCardPanel = new JPanel();
+            menuCardPanel.setBackground(lightBg);
+            menuCardPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createEmptyBorder(60, 0, 60, 0),
+                BorderFactory.createLineBorder(new Color(220, 220, 220), 1, true)));
+            menuCardPanel.setLayout(new GridLayout(2, 2, 40, 32)); // 2행 2열, 넓은 간격
+            JButton[] csrBtns = {systemReportButton, menukioskButton, roomTypeManagementButton, reservationButton};
+            for (JButton btn : csrBtns) {
+                btn.setBackground(navy);
+                btn.setForeground(Color.WHITE);
+                btn.setFont(btnFont.deriveFont(Font.BOLD, 20f));
+                btn.setFocusPainted(false);
+                btn.setPreferredSize(new Dimension(220, 90));
+                btn.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(new Color(220, 220, 220), 1, true),
+                    BorderFactory.createEmptyBorder(16, 0, 16, 0)));
+                menuCardPanel.add(btn);
+            }
+        } else {
+            menuCardPanel = new JPanel();
+            menuCardPanel.setBackground(lightBg);
+            menuCardPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createEmptyBorder(30, 0, 30, 0),
+                BorderFactory.createLineBorder(new Color(220, 220, 220), 1, true)));
+            menuCardPanel.setLayout(new GridLayout(2, 3, 32, 32)); // 2행 3열, 간격 넓힘
+            JButton[] menuButtons = {userManagementButton, systemReportButton, menukioskButton, roomTypeManagementButton, reservationButton, checkInOutButton};
+            for (JButton btn : menuButtons) {
+                btn.setBackground(navy);
+                btn.setForeground(Color.WHITE);
+                btn.setFont(btnFont.deriveFont(Font.BOLD, 18f));
+                btn.setFocusPainted(false);
+                btn.setPreferredSize(new Dimension(200, 80));
+                btn.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(new Color(220, 220, 220), 1, true),
+                    BorderFactory.createEmptyBorder(12, 0, 12, 0)));
+                menuCardPanel.add(btn);
+            }
+        }
+
+        JPanel menuPanelWrap = new JPanel(new GridBagLayout());
+        menuPanelWrap.setBackground(Color.WHITE);
+        menuPanelWrap.add(menuCardPanel, new GridBagConstraints());
+
+        // 스크롤 필요시만 사용 (버튼이 많아질 경우)
+        // JScrollPane menuScrollPane = new JScrollPane(menuPanelWrap);
+        // menuScrollPane.setBorder(null);
+        // menuScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        // menuScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        // menuScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+
+
+        JPanel mainWrap = new JPanel(new BorderLayout());
+        mainWrap.setBackground(Color.WHITE);
+        mainWrap.add(menuPanelWrap, BorderLayout.CENTER);
+        // 중앙 안내 카드 제거 (환영 메시지는 상단으로 이동)
+        this.add(mainWrap, BorderLayout.CENTER);
 
         applyAuthorization(role);
         roomTypeManagementButton.addActionListener(this::handleRoomAdminClick);
-        reservationButton.addActionListener(this::handleRoomManagementClick); //예약 조회 클릭        
-        userManagementButton.addActionListener(this::handleUserManagementClick); //직원 관리 클릭
-        systemReportButton.addActionListener(this::handleMenuManagementClick); //식음료 관리 관리 클릭
-        menukioskButton.addActionListener(this::handleMenuKioskClick); //식음료 관리 관리 클릭
-        // '보고서' 버튼 클릭 시 리포트 창 오픈 (객실 매출 기본 탭)
+        reservationButton.addActionListener(this::handleRoomManagementClick);
+        userManagementButton.addActionListener(this::handleUserManagementClick);
+        systemReportButton.addActionListener(this::handleMenuManagementClick);
+        menukioskButton.addActionListener(this::handleMenuKioskClick);
         checkInOutButton.addActionListener(e -> {
             JTabbedPane tabs = new JTabbedPane();
             tabs.addTab("객실 매출 보고서", new RoomSalesReportPanel());
@@ -74,32 +172,65 @@ public class MainFrame extends JFrame {
             f.add(tabs);
             f.setVisible(true);
         });
-        
+
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        
+        bottomPanel.setBackground(Color.WHITE);
         logoutButton = new JButton("로그아웃");
         logoutButton.setFocusPainted(false);
+        logoutButton.setBackground(Color.WHITE);
+        logoutButton.setForeground(navy);
+        logoutButton.setFont(new Font("맑은 고딕", Font.BOLD, 15));
+        logoutButton.setBorder(BorderFactory.createLineBorder(navy, 1));
+        logoutButton.setPreferredSize(new Dimension(110, 36));
         logoutButton.addActionListener(this::handleLogout);
         bottomPanel.add(logoutButton);
         this.add(bottomPanel, BorderLayout.SOUTH);
-        
-        this.setSize(900, 600);
+
+        this.setSize(1000, 700);
+        this.getContentPane().setBackground(Color.WHITE);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        this.setLocationRelativeTo(null); 
+        this.setLocationRelativeTo(null);
     }
     
     private void applyAuthorization(String role) {
        
-        boolean isAdmin = role.equalsIgnoreCase("Manager") || role.equalsIgnoreCase("Admin");  // 관리자 여부 확인
-        
-        userManagementButton.setVisible(isAdmin);
-        systemReportButton.setVisible(isAdmin);
-        roomTypeManagementButton.setVisible(isAdmin);
+        boolean isAdmin = role.equalsIgnoreCase("Manager") || role.equalsIgnoreCase("Admin");
+        boolean isCSR = role.equalsIgnoreCase("CSR");
+        boolean isCustomer = role.equalsIgnoreCase("Customer");
 
-        boolean isStaff = isAdmin || role.equalsIgnoreCase("CSR"); // 직원 여부 확인
-        
-        reservationButton.setVisible(isStaff);
-        checkInOutButton.setVisible(isStaff);    
+        // 관리자: 모든 메뉴
+        if (isAdmin) {
+            userManagementButton.setVisible(true);
+            systemReportButton.setVisible(true);
+            roomTypeManagementButton.setVisible(true);
+            reservationButton.setVisible(true);
+            checkInOutButton.setVisible(true);
+            menukioskButton.setVisible(true);
+        } else if (isCSR) {
+                // CSR: 객실관리, 식음료 판매 관리, 식음료 구매, 예약/조회 가능(보고서만 불가)
+            userManagementButton.setVisible(false);
+            systemReportButton.setVisible(true); // 식음료 판매 관리
+            roomTypeManagementButton.setVisible(true); // 객실관리
+                reservationButton.setVisible(true); // 예약/조회 가능
+            checkInOutButton.setVisible(false); // 보고서 불가
+                menukioskButton.setVisible(true); // 식음료 구매 가능
+        } else if (isCustomer) {
+            // Customer: 예약/조회, 식음료 구매만
+            userManagementButton.setVisible(false);
+            systemReportButton.setVisible(false);
+            roomTypeManagementButton.setVisible(false);
+            reservationButton.setVisible(true); // 예약 및 조회
+            checkInOutButton.setVisible(false); // 보고서 불가
+            menukioskButton.setVisible(true); // 식음료 구매
+        } else {
+            // 기타: 모두 숨김
+            userManagementButton.setVisible(false);
+            systemReportButton.setVisible(false);
+            roomTypeManagementButton.setVisible(false);
+            reservationButton.setVisible(false);
+            checkInOutButton.setVisible(false);
+            menukioskButton.setVisible(false);
+        }
     }
     
     private void handleRoomAdminClick(ActionEvent e) {

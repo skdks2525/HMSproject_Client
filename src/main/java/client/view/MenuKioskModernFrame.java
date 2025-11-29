@@ -56,49 +56,19 @@ public class MenuKioskModernFrame extends JFrame {
     // ===============================
     private JPanel createHeader() {
         JPanel header = new JPanel(new BorderLayout());
-        header.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        header.setBackground(Color.WHITE);
+        header.setBorder(BorderFactory.createEmptyBorder(18, 18, 8, 18));
 
-        // 뒤로가기 버튼 (왼쪽, 세로 중앙)
-        JPanel backPanel = new JPanel();
-        backPanel.setOpaque(false);
-        backPanel.setLayout(new BoxLayout(backPanel, BoxLayout.Y_AXIS));
-        backPanel.add(Box.createVerticalGlue());
-        JButton backButton = new JButton("뒤로가기");
-        backButton.setFont(new Font("맑은 고딕", Font.PLAIN, 16));
-        backButton.setFocusPainted(false);
-        backButton.setBackground(new Color(230,230,230));
-        backButton.setBorder(BorderFactory.createEmptyBorder(8, 20, 8, 20));
-        backButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        backButton.addActionListener(e -> {
-            if (!cart.getItems().isEmpty()) {
-                int result = JOptionPane.showConfirmDialog(this,
-                    "결제하지 않은 장바구니 내역은 초기화됩니다.\n정말 뒤로 가시겠습니까?",
-                    "뒤로가기 확인", JOptionPane.YES_NO_OPTION);
-                if (result == JOptionPane.YES_OPTION) {
-                    cart.clear();
-                    dispose();
-                }
-            } else {
-                dispose();
-            }
-        });
-        backPanel.add(backButton);
-        backPanel.add(Box.createVerticalGlue());
-        // 오른쪽에 뒤로가기 버튼 배치
-        header.add(backPanel, BorderLayout.EAST);
+        // 뒤로가기 버튼 제거
 
         // 중앙 제목
         JLabel title = new JLabel("룸서비스 주문");
-        title.setFont(new Font("맑은 고딕", Font.BOLD, 28));
+        title.setFont(new Font("맑은 고딕", Font.BOLD, 32));
+        title.setForeground(new Color(10, 48, 87));
         title.setHorizontalAlignment(SwingConstants.CENTER);
-        JPanel titlePanel = new JPanel(new BorderLayout());
-        titlePanel.setOpaque(false);
-        titlePanel.add(title, BorderLayout.CENTER);
-        header.add(titlePanel, BorderLayout.CENTER);
+        header.add(title, BorderLayout.CENTER);
 
-        // 왼쪽 여백
-        header.add(Box.createHorizontalStrut(60), BorderLayout.WEST);
-
+        header.add(Box.createHorizontalStrut(30), BorderLayout.WEST);
         return header;
     }
 
@@ -107,12 +77,11 @@ public class MenuKioskModernFrame extends JFrame {
     // ===============================
     private JScrollPane createMenuScrollPanel() {
         menuListPanel = new JPanel();
-        // 레이아웃은 loadMenuCards에서 동적으로 설정
         menuListPanel.setBackground(Color.WHITE);
-
         JScrollPane scrollPane = new JScrollPane(menuListPanel);
-        scrollPane.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
-        scrollPane.getVerticalScrollBar().setUnitIncrement(16); // 스크롤 속도 개선
+        scrollPane.setBorder(BorderFactory.createEmptyBorder(18, 18, 18, 18));
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        scrollPane.setBackground(Color.WHITE);
         return scrollPane;
     }
 
@@ -121,17 +90,29 @@ public class MenuKioskModernFrame extends JFrame {
     private JPanel createCartPanel() {
         cartPanel = new JPanel();
         cartPanel.setLayout(new BoxLayout(cartPanel, BoxLayout.Y_AXIS));
-        cartPanel.setPreferredSize(new Dimension(250, 0));
-        cartPanel.setBorder(BorderFactory.createTitledBorder("장바구니"));
+        cartPanel.setPreferredSize(new Dimension(270, 0));
+        cartPanel.setBackground(Color.WHITE);
+        cartPanel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(200, 200, 200), 2),
+            BorderFactory.createEmptyBorder(18, 18, 18, 18)));
+
+        JLabel cartTitle = new JLabel("장바구니");
+        cartTitle.setFont(new Font("맑은 고딕", Font.BOLD, 18));
+        cartTitle.setForeground(new Color(10, 48, 87));
+        cartTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
+        cartPanel.add(cartTitle);
+        cartPanel.add(Box.createVerticalStrut(10));
 
         cartListModel = new DefaultListModel<>();
         JList<String> cartList = new JList<>(cartListModel);
+        cartList.setFont(new Font("맑은 고딕", Font.PLAIN, 14));
         JScrollPane cartScroll = new JScrollPane(cartList);
-        cartScroll.setPreferredSize(new Dimension(220, 250));
+        cartScroll.setPreferredSize(new Dimension(220, 220));
         cartPanel.add(cartScroll);
 
         totalLabel = new JLabel("총액: 0원");
         totalLabel.setFont(new Font("맑은 고딕", Font.BOLD, 16));
+        totalLabel.setForeground(new Color(10, 48, 87));
         totalLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         cartPanel.add(Box.createVerticalStrut(10));
         cartPanel.add(totalLabel);
@@ -139,6 +120,10 @@ public class MenuKioskModernFrame extends JFrame {
         payButton = new JButton("결제");
         payButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         payButton.setMaximumSize(new Dimension(200, 40));
+        payButton.setBackground(new Color(10, 48, 87));
+        payButton.setForeground(Color.WHITE);
+        payButton.setFont(new Font("맑은 고딕", Font.BOLD, 15));
+        payButton.setFocusPainted(false);
         payButton.addActionListener(e -> handlePay());
         cartPanel.add(Box.createVerticalStrut(10));
         cartPanel.add(payButton);
@@ -233,47 +218,46 @@ public class MenuKioskModernFrame extends JFrame {
         card.setMaximumSize(new Dimension(180, 220));
         card.setBackground(Color.WHITE);
         card.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createEmptyBorder(12, 12, 12, 12),
-            BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(220, 220, 220), 1, true),
-                BorderFactory.createMatteBorder(0, 0, 8, 0, new Color(240,240,240))
-            )
-        ));
+            BorderFactory.createLineBorder(new Color(10, 48, 87), 1, true),
+            BorderFactory.createEmptyBorder(14, 14, 14, 14)));
         card.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        // 그림자 효과(간단히 하단 여백)
         card.setOpaque(true);
 
-        // 정사각형 이미지 박스
         JPanel imgBox = new JPanel();
         imgBox.setPreferredSize(new Dimension(80, 80));
         imgBox.setMaximumSize(new Dimension(80, 80));
         imgBox.setMinimumSize(new Dimension(80, 80));
-        imgBox.setBackground(new Color(220, 220, 220));
+        imgBox.setBackground(new Color(230, 236, 245));
         imgBox.setAlignmentX(Component.CENTER_ALIGNMENT);
-        imgBox.add(new JLabel("IMG"));
+        JLabel imgLabel = new JLabel("IMG");
+        imgLabel.setFont(new Font("맑은 고딕", Font.BOLD, 13));
+        imgLabel.setForeground(new Color(120, 120, 120));
+        imgBox.add(imgLabel);
         card.add(imgBox);
 
         card.add(Box.createVerticalStrut(10));
 
-        // 메뉴명, 가격, 재고
         JLabel nameLabel = new JLabel(menu.getName());
         nameLabel.setFont(new Font("맑은 고딕", Font.BOLD, 16));
         nameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        nameLabel.setForeground(new Color(10, 48, 87));
         card.add(nameLabel);
 
         JLabel priceLabel = new JLabel(menu.getPrice() + "원");
         priceLabel.setFont(new Font("맑은 고딕", Font.BOLD, 15));
-        priceLabel.setForeground(new Color(252, 136, 3));
+        priceLabel.setForeground(new Color(10, 48, 87));
         priceLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         card.add(priceLabel);
 
         card.add(Box.createVerticalStrut(5));
 
-        // 담기 버튼
         JButton addButton = new JButton("담기");
         addButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         addButton.setEnabled(menu.getStock() > 0 && menu.getIsAvailable());
+        addButton.setBackground(new Color(10, 48, 87));
+        addButton.setForeground(Color.WHITE);
+        addButton.setFont(new Font("맑은 고딕", Font.BOLD, 14));
+        addButton.setFocusPainted(false);
         addButton.addActionListener(e -> {
             cart.addItem(menu);
             updateCartPanel();

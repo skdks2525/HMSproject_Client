@@ -32,78 +32,106 @@ public class MenuManagementFrame extends JFrame {
         private final String[] columnNames = {"ID", "이름", "가격", "종류", "판매 여부", "재고"};
     public MenuManagementFrame() {
         setTitle("식음료 메뉴 관리");
-        
-        // 테이블 모델 및 JTable 초기화
+        Color navy = new Color(10, 48, 87);
+        Font btnFont = new Font("맑은 고딕", Font.BOLD, 15);
+        Font labelFont = new Font("맑은 고딕", Font.BOLD, 15);
+        Font tableFont = new Font("맑은 고딕", Font.PLAIN, 14);
+        Font tableHeaderFont = new Font("맑은 고딕", Font.BOLD, 14);
+
+        // 상단 제목/뒤로가기 패널 추가
+        // 상단 제목/뒤로가기 패널 제거
+
         this.tableModel = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                // 테이블 셀 직접 수정 금지
                 return false;
             }
         };
-        
         this.menuTable = new JTable(tableModel);
-        
+        menuTable.setFont(tableFont);
+        menuTable.getTableHeader().setFont(tableHeaderFont);
+        menuTable.getTableHeader().setBackground(navy);
+        menuTable.getTableHeader().setForeground(Color.WHITE);
+        menuTable.setRowHeight(28);
+
         addButton = new JButton("메뉴 등록");
         updateButton = new JButton("메뉴 수정");
         deleteButton = new JButton("메뉴 삭제");
         clearButton = new JButton("입력칸 지우기");
-        
-        // UI 디자인 및 레이아웃 구성
-        initializeUI();
-        
-        // 이벤트 리스너 설정
+        JButton[] btns = {addButton, updateButton, deleteButton, clearButton};
+        for (JButton b : btns) {
+            b.setBackground(navy);
+            b.setForeground(Color.WHITE);
+            b.setFont(btnFont);
+            b.setFocusPainted(false);
+        }
+
+        initializeUI(navy, labelFont);
         setupEventListeners();
-        
-        // 초기 데이터 로딩
         loadMenuData();
-        
-        // 창 설정
-        this.setSize(800, 500);
+        this.setSize(900, 540);
         this.setLocationRelativeTo(null);
-        
-        // 메인 뷰에서 이 창을 띄울 것이므로, 닫을 때는 이 창만 닫히도록 설정
+        this.getContentPane().setBackground(Color.WHITE);
         this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
     }
     
     //  UI 디자인 및 컴포넌트 배치
     private void initializeUI() {
-            // [UI 구조] 입력 패널을 3행 2열로 재배치하여 ID/이름, 가격/종류, 판매여부/재고를 각각 한 줄에 배치
-            // [UI 개선] 판매여부, 재고 필드가 명확하게 구분되어 입력/수정이 쉬움
-        this.setLayout(new BorderLayout(10, 10));
+        initializeUI(new Color(10, 48, 87), new Font("맑은 고딕", Font.BOLD, 15));
+    }
 
-        // 테이블 패널 (중앙)
+    private void initializeUI(Color navy, Font labelFont) {
+        this.setLayout(new BorderLayout(14, 14));
+        this.getContentPane().setBackground(Color.WHITE);
+
         JScrollPane tableScrollPane = new JScrollPane(menuTable);
+        tableScrollPane.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(navy, 1), "식음료 메뉴 목록", 0, 0, labelFont, navy));
+        tableScrollPane.setPreferredSize(new Dimension(0, 220)); // 테이블 높이 늘림
         this.add(tableScrollPane, BorderLayout.CENTER);
 
-        // 입력 및 버튼 패널 (남쪽)
-        JPanel southPanel = new JPanel(new BorderLayout(10, 10));
+        JPanel southPanel = new JPanel(new BorderLayout(14, 14));
+        southPanel.setBackground(Color.WHITE);
 
-        // 입력 패널: 3행 2열(상단 ID/이름, 중간 가격/종류, 하단 판매여부/재고)
-        JPanel inputPanel = new JPanel(new GridLayout(3, 2, 10, 5));
-        inputPanel.setBorder(BorderFactory.createTitledBorder("메뉴 정보 입력/수정"));
+        JPanel inputPanel = new JPanel(new GridLayout(3, 2, 12, 8));
+        inputPanel.setPreferredSize(new Dimension(270, 220)); // 입력 패널 크기 축소
+        inputPanel.setBackground(Color.WHITE);
+        inputPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(navy, 1), "메뉴 정보 입력/수정", 0, 0, labelFont, navy));
 
-        inputPanel.add(new JLabel("ID: "));
+        JLabel[] labels = {
+            new JLabel("ID: "), new JLabel("이름: "), new JLabel("가격: "), new JLabel("종류: "), new JLabel("판매여부: "), new JLabel("재고: ")
+        };
+        for (JLabel l : labels) {
+            l.setFont(labelFont);
+            l.setForeground(navy);
+        }
+
+        inputPanel.add(labels[0]);
+        menuIdField.setFont(labelFont);
         inputPanel.add(menuIdField);
-        inputPanel.add(new JLabel("이름: "));
+        inputPanel.add(labels[1]);
+        nameField.setFont(labelFont);
         inputPanel.add(nameField);
-        inputPanel.add(new JLabel("가격: "));
+        inputPanel.add(labels[2]);
+        priceField.setFont(labelFont);
         inputPanel.add(priceField);
-        inputPanel.add(new JLabel("종류: "));
+        inputPanel.add(labels[3]);
         String[] categorys = {"메인음식", "디저트", "음료", "미분류"};
         cmbCategory = new JComboBox<>(categorys);
+        cmbCategory.setFont(labelFont);
         inputPanel.add(cmbCategory);
-        inputPanel.add(new JLabel("판매여부: "));
+        inputPanel.add(labels[4]);
         String[] isavailable = {"판매중", "판매중지"};
         cmbIsAvailable = new JComboBox<>(isavailable);
+        cmbIsAvailable.setFont(labelFont);
         inputPanel.add(cmbIsAvailable);
-        inputPanel.add(new JLabel("재고: "));
+        inputPanel.add(labels[5]);
+        stockField.setFont(labelFont);
         inputPanel.add(stockField);
 
         southPanel.add(inputPanel, BorderLayout.CENTER);
 
-        // 버튼 패널
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttonPanel.setBackground(Color.WHITE);
         buttonPanel.add(addButton);
         buttonPanel.add(updateButton);
         buttonPanel.add(deleteButton);

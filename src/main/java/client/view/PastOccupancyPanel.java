@@ -26,27 +26,56 @@ public class PastOccupancyPanel extends JPanel {
      * - 서버와 통신: GET_PAST_OCCUPANCY 요청/응답 파싱
      */
     public PastOccupancyPanel() {
-        // 표: 날짜, 타입별, 평균 점유율
+        Color navy = new Color(10, 48, 87);
+        Font labelFont = new Font("맑은 고딕", Font.BOLD, 15);
+        Font cardFont = new Font("맑은 고딕", Font.BOLD, 14);
+        Font btnFont = new Font("맑은 고딕", Font.BOLD, 14);
+
         model = new DefaultTableModel(new String[]{"날짜", "스탠다드 점유율", "디럭스 점유율", "스위트 점유율", "평균 점유율"}, 0);
         table = new JTable(model);
+        table.setFont(new Font("맑은 고딕", Font.PLAIN, 14));
+        table.getTableHeader().setFont(new Font("맑은 고딕", Font.BOLD, 14));
+        table.getTableHeader().setBackground(navy);
+        table.getTableHeader().setForeground(Color.WHITE);
+        table.setRowHeight(28);
 
         setLayout(new BorderLayout());
-        // 상단 입력 패널: 기간 입력, 조회 버튼, 안내 메시지
-        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 8));
-        topPanel.add(new JLabel("시작일 (yyyy-MM-dd): "));
-        startDateField = new JTextField(10); // 시작일 입력
+        setBackground(Color.WHITE);
+
+        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 12));
+        topPanel.setBackground(Color.WHITE);
+        JLabel lblStart = new JLabel("시작일 (yyyy-MM-dd): ");
+        lblStart.setFont(labelFont);
+        lblStart.setForeground(navy);
+        topPanel.add(lblStart);
+        startDateField = new JTextField(10);
+        startDateField.setFont(labelFont);
         topPanel.add(startDateField);
-        topPanel.add(new JLabel("~ 종료일 (yyyy-MM-dd): "));
-        endDateField = new JTextField(10);   // 종료일 입력
+        JLabel lblEnd = new JLabel("~ 종료일 (yyyy-MM-dd): ");
+        lblEnd.setFont(labelFont);
+        lblEnd.setForeground(navy);
+        topPanel.add(lblEnd);
+        endDateField = new JTextField(10);
+        endDateField.setFont(labelFont);
         topPanel.add(endDateField);
-        searchButton = new JButton("조회");  // 조회 버튼
+        searchButton = new JButton("조회");
+        searchButton.setBackground(navy);
+        searchButton.setForeground(Color.WHITE);
+        searchButton.setFont(btnFont);
+        searchButton.setFocusPainted(false);
         topPanel.add(searchButton);
-        infoLabel = new JLabel();            // 안내 메시지
+        infoLabel = new JLabel();
+        infoLabel.setFont(new Font("맑은 고딕", Font.PLAIN, 13));
+        infoLabel.setForeground(new Color(200, 0, 0));
         topPanel.add(infoLabel);
         JButton printButton = new JButton("인쇄");
+        printButton.setBackground(navy);
+        printButton.setForeground(Color.WHITE);
+        printButton.setFont(btnFont);
+        printButton.setFocusPainted(false);
+        printButton.setBorder(BorderFactory.createLineBorder(navy, 1));
         topPanel.add(printButton);
 
-        // 인쇄 기능: 요약+표 전체 인쇄 (Printable 구현)
         printButton.addActionListener(e -> {
             try {
                 java.awt.print.PrinterJob job = java.awt.print.PrinterJob.getPrinterJob();
@@ -62,7 +91,6 @@ public class PastOccupancyPanel extends JPanel {
                     g2.setFont(new Font("맑은 고딕", Font.PLAIN, 13));
                     g2.drawString(avgLabel.getText(), 20, y);
                     y += 30;
-                    // 표 인쇄 (JTable.print() 활용)
                     g2.translate(0, y);
                     table.print();
                     return java.awt.print.Printable.PAGE_EXISTS;
@@ -75,27 +103,28 @@ public class PastOccupancyPanel extends JPanel {
             }
         });
 
-        // 상단 요약 카드: 기간 평균 점유율 강조
-        JPanel cards = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 8));
+        JPanel cards = new JPanel(new FlowLayout(FlowLayout.LEFT, 16, 10));
+        cards.setBackground(Color.WHITE);
         avgLabel.setText("기간 평균 점유율: 0%");
-        avgLabel.setFont(avgLabel.getFont().deriveFont(14f));
+        avgLabel.setFont(cardFont);
+        avgLabel.setForeground(navy);
         avgLabel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(220,220,220)),
-            BorderFactory.createEmptyBorder(8,12,8,12)));
+            BorderFactory.createLineBorder(navy, 1),
+            BorderFactory.createEmptyBorder(10,18,10,18)));
         cards.add(avgLabel);
 
-        // 상단 전체 래핑
         JPanel northWrap = new JPanel(new BorderLayout());
+        northWrap.setBackground(Color.WHITE);
         northWrap.add(topPanel, BorderLayout.NORTH);
         northWrap.add(cards, BorderLayout.CENTER);
         add(northWrap, BorderLayout.NORTH);
 
         JScrollPane tableScroll = new JScrollPane(table);
-        tableScroll.setBorder(BorderFactory.createEmptyBorder(8,8,8,8));
+        tableScroll.setBorder(BorderFactory.createEmptyBorder(12,12,12,12));
         add(tableScroll, BorderLayout.CENTER);
 
-        setDefaultDates(); // 기본 시작일/종료일 세팅
-        searchButton.addActionListener(this::handleSearch); // 조회 버튼 이벤트
+        setDefaultDates();
+        searchButton.addActionListener(this::handleSearch);
     }
 
     private void setDefaultDates() {
