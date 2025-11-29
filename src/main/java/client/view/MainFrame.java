@@ -126,8 +126,7 @@ public class MainFrame extends JFrame {
     
     private void handleMenuKioskClick(ActionEvent e) {
         System.out.println("[클라이언트] 식음료 키오스크 화면");
-        
-        new MenuKioskModernFrame().setVisible(true);
+        new MenuKioskModernFrame(userId).setVisible(true);
     }
     
     private void handleLogout(ActionEvent e) {
