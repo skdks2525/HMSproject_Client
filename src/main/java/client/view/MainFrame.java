@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package client.view;
 import client.net.*;
 import javax.swing.*;
@@ -60,6 +56,7 @@ public class MainFrame extends JFrame {
         this.add(welcomeLabel, BorderLayout.CENTER);
 
         applyAuthorization(role);
+        roomTypeManagementButton.addActionListener(this::handleRoomAdminClick);
         reservationButton.addActionListener(this::handleRoomManagementClick); //예약 조회 클릭        
         userManagementButton.addActionListener(this::handleUserManagementClick); //직원 관리 클릭
         systemReportButton.addActionListener(this::handleMenuManagementClick); //식음료 관리 관리 클릭
@@ -103,6 +100,11 @@ public class MainFrame extends JFrame {
         
         reservationButton.setVisible(isStaff);
         checkInOutButton.setVisible(isStaff);    
+    }
+    
+    private void handleRoomAdminClick(ActionEvent e) {
+        System.out.println("[관리자] 객실관리 화면");
+        new RoomAdminFrame().setVisible(true);
     }
     
     private void handleUserManagementClick(ActionEvent e) {

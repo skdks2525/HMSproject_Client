@@ -139,155 +139,171 @@ public class ReservationPanel extends JPanel {
         return panel;
     }
 
-    // --- [객실 선택 패널; 아직은 껍데기] ---
-    private JPanel createRoomSelectionPanel() {
-        // roomListPanel을 초기화하여 나중에 카드를 추가할 수 있게 함
-        roomListPanel = new JPanel();
+    // 객실 선택 패널
+private JPanel createRoomSelectionPanel() {
+        // 테투리
+        JPanel container = new JPanel(new BorderLayout());
+        container.setBackground(Color.WHITE);
+        container.setBorder(BorderFactory.createTitledBorder("객실 선택"));
+
+        // 카드 객체
+        roomListPanel = new JPanel(); 
         roomListPanel.setLayout(new BoxLayout(roomListPanel, BoxLayout.Y_AXIS));
         roomListPanel.setBackground(Color.WHITE);
-        roomListPanel.setBorder(BorderFactory.createTitledBorder("객실 선택"));
         
+        // 스크롤
+        JScrollPane scrollPane = new JScrollPane(roomListPanel);
+        scrollPane.setBorder(null);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(20);
+        scrollPane.setPreferredSize(new Dimension(850, 400)); 
+        container.add(scrollPane, BorderLayout.CENTER); //스크롤 추가
         roomGroup = new ButtonGroup(); 
-        
-        return roomListPanel;
+        return container; // 스크롤이 포함된 컨테이너 반환
     }
 
     // 서버에서 객실목록 가져오는 역할
     private void loadRoomDataFromServer() {
-        String response = NetworkService.getInstance().sendRequest("GET_ALL_ROOMS"); //서버에 목록 요청
+        Date in = dateCheckIn.getDate();
+        Date out = dateCheckOut.getDate();
+        if (in == null || out == null) return;
         
-        if (response != null && response.startsWith("ROOM_LIST:")) {
-            String data = response.substring("ROOM_LIST:".length());
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        String sIn = sdf.format(in);
+        String sOut = sdf.format(out);
+
+        // 기존 카드 싹 지우기
+        roomListPanel.removeAll();
+        roomGroup = new ButtonGroup(); // 그룹도 초기화
+
+        // 서버 요청 (CHECK_ALL_ROOM_STATUS)
+        String response = NetworkService.getInstance().sendRequest("CHECK_ALL_ROOM_STATUS:" + sIn + ":" + sOut);
+        
+        if (response != null && response.startsWith("ROOM_STATUS_LIST:")) {
+            String data = response.substring("ROOM_STATUS_LIST:".length());
             if (data.isEmpty()) return;
 
-            String[] rooms = data.split("/");
+            String[] rooms = data.split("\\|"); 
             
-            // 중복 타입 제거 (같은 타입의 방이 여러 개여도 카드는 종류별로 하나만 표시)
-            Set<String> addedTypes = new HashSet<>(); 
-
             for (String r : rooms) {
-                // 데이터 포맷: 번호, 타입, 가격, 인원, 설명
                 String[] info = r.split(",");
-                if (info.length >= 5) {
-                    String type = info[1];
-                    String price = info[2];
-                    String desc = info[4]; // 설명
-
-                    // 이미 화면에 추가한 타입이면 건너뜀
-                    if (addedTypes.contains(type)) continue; 
-
-                    // 카드 생성 및 추가 (ActionCommand로 '타입'을 저장)
-                    JPanel card = createRoomCard(type + " Room", price + "원", desc, type);
+                // 포맷: 번호,타입,가격,인원,설명,상태(BOOKED/AVAILABLE)
+                if (info.length >= 6) {
+                    JPanel card = createRoomCard(info);
                     roomListPanel.add(card);
-                    roomListPanel.add(Box.createRigidArea(new Dimension(0, 15)));
-                    
-                    addedTypes.add(type);
+                    roomListPanel.add(Box.createRigidArea(new Dimension(0, 10))); // 간격
                 }
             }
-            // 화면 갱신
-            roomListPanel.revalidate();
-            roomListPanel.repaint();
         } else {
-            JOptionPane.showMessageDialog(this, "객실 정보를 불러오지 못했습니다.\n서버 연결을 확인해주세요.", "통신 오류", JOptionPane.WARNING_MESSAGE);
+            JLabel lblErr = new JLabel("서버 통신 오류 또는 데이터가 없습니다.");
+            roomListPanel.add(lblErr);
         }
+        
+        roomListPanel.revalidate();
+        roomListPanel.repaint();
     }
 
     // 객실 카드
-    private JPanel createRoomCard(String title, String price, String options, String actionCommand) {
+    private JPanel createRoomCard(String[] info) {
+        String roomNum = info[0];
+        String type = info[1];
+        String price = info[2];
+        // String capacity = info[3];
+        String desc = info[4];
+        String status = info[5]; // BOOKED or AVAILABLE
+
+        boolean isBooked = "BOOKED".equals(status);
+
         JPanel card = new JPanel(new BorderLayout(15, 15));
-        card.setBackground(new Color(245, 245, 245));
+        // 예약된 방은 회색 배경
+        card.setBackground(isBooked ? new Color(240, 240, 240) : new Color(245, 255, 245)); 
         card.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(Color.LIGHT_GRAY),
                 new EmptyBorder(15, 15, 15, 15)));
-        card.setMaximumSize(new Dimension(1000, 120)); 
+        card.setMaximumSize(new Dimension(1000, 100)); 
+        card.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // 아이콘 (이미지 대신 텍스트 박스)
-        JLabel lblIcon = new JLabel("ROOM", SwingConstants.CENTER);
-        lblIcon.setPreferredSize(new Dimension(120, 80));
+        // 왼쪽: 아이콘 (방번호)
+        JLabel lblIcon = new JLabel(roomNum + "호", SwingConstants.CENTER);
+        lblIcon.setFont(new Font("맑은 고딕", Font.BOLD, 24));
+        lblIcon.setPreferredSize(new Dimension(120, 70));
         lblIcon.setOpaque(true);
-        lblIcon.setBackground(Color.GRAY);
+        // 예약되면 회색 아이콘, 가능하면 파란 아이콘
+        lblIcon.setBackground(isBooked ? Color.LIGHT_GRAY : new Color(100, 150, 255));
         lblIcon.setForeground(Color.WHITE);
         card.add(lblIcon, BorderLayout.WEST);
 
-        // 정보 (타입, 가격, 설명)
-        JPanel infoP = new JPanel(new GridLayout(3, 1));
+        // 중앙: 정보
+        JPanel infoP = new JPanel(new GridLayout(2, 1));
         infoP.setOpaque(false);
         
-        JLabel lblTitle = new JLabel(title);
-        lblTitle.setFont(new Font("맑은 고딕", Font.BOLD, 18));
+        JLabel lblTitle = new JLabel(type + " Room (" + price + "원)");
+        lblTitle.setFont(new Font("맑은 고딕", Font.BOLD, 16));
         
-        JLabel lblPrice = new JLabel(price + " / 1박");
-        lblPrice.setForeground(new Color(255, 102, 0)); // 주황색 강조
-
-        JLabel lblOpt = new JLabel(options);
-        lblOpt.setForeground(Color.DARK_GRAY);
+        // 상태 메시지
+        String statusText = isBooked ? "⛔ 이미 예약된 객실입니다." : "✅ " + desc;
+        JLabel lblDesc = new JLabel(statusText);
+        lblDesc.setFont(new Font("맑은 고딕", Font.PLAIN, 14));
+        if (isBooked) lblDesc.setForeground(Color.RED);
+        else lblDesc.setForeground(Color.DARK_GRAY);
 
         infoP.add(lblTitle);
-        infoP.add(lblPrice);
-        infoP.add(lblOpt);
-        
+        infoP.add(lblDesc);
         card.add(infoP, BorderLayout.CENTER);
 
-        // 선택 버튼
+        // 오른쪽: 선택 버튼
         JRadioButton rbtn = new JRadioButton("선택");
         rbtn.setOpaque(false);
-        rbtn.setActionCommand(actionCommand); // "Standard", "Deluxe" 등이 저장됨
+        // 예약된 방은 선택 불가
+        rbtn.setEnabled(!isBooked); 
+        
+        // ActionCommand에 "방 번호"를 저장
+        rbtn.setActionCommand(roomNum); 
         roomGroup.add(rbtn);
         
         JPanel btnP = new JPanel(new GridBagLayout());
         btnP.setOpaque(false);
         btnP.add(rbtn);
+        
         card.add(btnP, BorderLayout.EAST);
 
         return card;
     }
 
     // 예약 확정
-    private void handleReserveAction(ActionEvent e) {
-        // 객실 선택 여부 확인
+private void handleReserveAction(ActionEvent e) {
         ButtonModel selectedModel = roomGroup.getSelection();
         if (selectedModel == null) {
             JOptionPane.showMessageDialog(this, "객실을 선택해주세요.");
             return;
         }
-        String roomType = selectedModel.getActionCommand(); // 선택한 객실의 타입
+        // [변경] 이제 타입(STD)이 아니라 방 번호(101)를 가져옵니다.
+        String selectedRoomNum = selectedModel.getActionCommand(); 
 
-        // 날짜 확인
-        Date dateIn = dateCheckIn.getDate();
-        Date dateOut = dateCheckOut.getDate();
-        if (dateIn == null || dateOut == null) {
-            JOptionPane.showMessageDialog(this, "입실/퇴실 날짜를 선택해주세요.");
-            return;
-        }
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        String in = sdf.format(dateIn);
-        String out = sdf.format(dateOut);
-
-        // 입력값 확인
+        String in = sdf.format(dateCheckIn.getDate());
+        String out = sdf.format(dateCheckOut.getDate());
         String name = txtName.getText().trim();
         String phone = txtPhone.getText().trim();
         int guests = (int) spinGuests.getValue();
 
         if (name.isEmpty() || phone.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "예약자 성함과 전화번호를 입력해주세요.");
+            JOptionPane.showMessageDialog(this, "필수 정보를 입력해주세요.");
             return;
         }
+        String reqText = "없음"; 
 
-        // 서버 전송 (번호 대신 '타입'을 보내면, 서버가 알아서 빈 방을 배정)
-        String request = String.format("ADD_RESERVATION:%s:%s:%s:%s:%d:%s", 
-                roomType, name, in, out, guests, phone);
+        String request = String.format("ADD_RESERVATION:%s:%s:%s:%s:%d:%s:%s", 
+                selectedRoomNum, name, in, out, guests, phone, reqText);
         
         String response = NetworkService.getInstance().sendRequest(request);
 
-        if (response != null && response.startsWith("RESERVE_SUCCESS")) {
-            String assignedRoom = response.contains(":") ? response.split(":")[1] : "배정중";
-            
-            JOptionPane.showMessageDialog(this, 
-                    String.format("예약이 완료되었습니다!\n[%s] %s호\n%s ~ %s", roomType, assignedRoom, in, out));
-            
+        if (response.startsWith("RESERVE_SUCCESS")) {
+            JOptionPane.showMessageDialog(this, "예약 완료! (" + selectedRoomNum + "호)");
             txtName.setText("");
             txtPhone.setText("010-0000-0000");
             roomGroup.clearSelection();
+            // 예약 후 목록 갱신 (해당 방을 회색으로 만들기 위해)
+            loadRoomDataFromServer(); 
         } else {
             JOptionPane.showMessageDialog(this, "예약 실패: " + response, "오류", JOptionPane.ERROR_MESSAGE);
         }

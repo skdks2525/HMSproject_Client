@@ -85,7 +85,7 @@ public class MyReservationPanel extends JPanel {
             String data = response.substring("RES_LIST:".length());
             
             if (!data.isEmpty()) {
-                String[] list = data.split("/");
+                String[] list = data.split("\\|");
                 for (String item : list) {
  
                     String[] info = item.split(","); 
