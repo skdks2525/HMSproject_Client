@@ -61,15 +61,13 @@ public class LoginFrame extends JFrame {
         btnLogin.setBounds(40, 230, 270, 40);
         formPanel.add(btnLogin);
 
-        // 'I don't have an account' 라벨 제거
-
         JButton btnSignUp = new JButton("Sign Up");
         btnSignUp.setForeground(new Color(10, 48, 87));
         btnSignUp.setFont(new Font("맑은 고딕", Font.BOLD, 18));
         btnSignUp.setBorderPainted(false);
         btnSignUp.setContentAreaFilled(false);
         btnSignUp.setFocusPainted(false);
-        btnSignUp.setBounds(180, 280, 120, 40); // 크기와 위치 확대
+        btnSignUp.setBounds(180, 280, 120, 40);
         formPanel.add(btnSignUp);
 
         bgPanel.add(formPanel);

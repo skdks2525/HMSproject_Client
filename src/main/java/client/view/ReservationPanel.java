@@ -296,7 +296,7 @@ private void handleReserveAction(ActionEvent e) {
             JOptionPane.showMessageDialog(this, "객실을 선택해주세요.");
             return;
         }
-        // [변경] 이제 타입(STD)이 아니라 방 번호(101)를 가져옵니다.
+        // 방번호 가져옴
         String selectedRoomNum = selectedModel.getActionCommand(); 
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");

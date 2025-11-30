@@ -148,9 +148,7 @@ public class MenuKioskModernFrame extends JFrame {
         return cartPanel;
     }
 
-    // ===============================
-    // ...existing code...
-    /**
+    /*
      * 서버에서 판매중인 메뉴 목록을 받아와 카드 형태로 동적으로 패널에 추가
      * - GET_MENUS 요청 후, 응답이 정상(MENU_LIST:)이 아니면 에러 메시지 출력
      * - 각 메뉴 info: [0]=ID, [1]=이름, [2]=가격, [3]=카테고리, [4]=판매여부, [5]=재고
@@ -218,15 +216,12 @@ public class MenuKioskModernFrame extends JFrame {
     }
 
     // ===============================
-        // ===============================
     // 메뉴 객체 기반 카드 생성
     /**
      * 단일 메뉴 정보를 카드 형태의 JPanel로 생성
      * - 메뉴명, 가격, 재고 표시
      * - '담기' 버튼 클릭 시 장바구니에 해당 메뉴 추가
      * - 재고 0이거나 판매중지 메뉴는 버튼 비활성화
-     * @param menu 메뉴 정보 객체
-     * @return 메뉴 카드 패널
      */
     private JPanel createMenuCard(Menu menu) {
         JPanel card = new JPanel();

@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package client.view;
 import client.net.NetworkService;
 import javax.swing.*;
@@ -48,7 +44,7 @@ public class UserManagementFrame extends JFrame {
         Color navy = new Color(10, 48, 87);
         Font btnFont = new Font("맑은 고딕", Font.BOLD, 15);
 
-        // 1. 상단: 사용자 목록 (테이블)
+        // 상단: 사용자 목록 (테이블)
         JPanel listPanel = new JPanel(new BorderLayout());
         listPanel.setBackground(Color.WHITE);
         listPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(navy, 1), "사용자 목록 (서버 데이터)", 0, 0, new Font("맑은 고딕", Font.BOLD, 15), navy));
@@ -76,7 +72,7 @@ public class UserManagementFrame extends JFrame {
         btnRefresh.addActionListener(e -> loadUserList());
         listPanel.add(btnRefresh, BorderLayout.SOUTH);
 
-        // 2. 하단: 관리 패널 (추가/삭제) + 로그창
+        // 하단: 관리 패널 (추가/삭제) + 로그창
         JPanel bottomPanel = new JPanel(new BorderLayout(12, 12));
         bottomPanel.setBackground(Color.WHITE);
 
@@ -212,21 +208,16 @@ public class UserManagementFrame extends JFrame {
 
         return panel;
     }
-
-    // =======================================================
-    // 📡 네트워크 통신 로직 (Controller 역할 대체)
-    // =======================================================
-
-    /**
+    /** 네트워크 통신 로직
      * 서버로부터 사용자 목록을 가져와 테이블에 표시 (GET_USERS)
      */
     private void loadUserList() {
         displayLog("서버에 사용자 목록 요청 중...");
         
-        // 1. 서버 요청
+        // 서버 요청
         String response = NetworkService.getInstance().sendRequest("GET_USERS");
 
-        // 2. 응답 처리 (프로토콜: "USER_LIST:id,password,role,phone,name/...")
+        // 응답 처리
         if (response != null && response.startsWith("USER_LIST:")) {
             tableModel.setRowCount(0); // 기존 목록 초기화
             
@@ -250,9 +241,8 @@ public class UserManagementFrame extends JFrame {
         }
     }
 
-    /**
-     * 사용자 삭제 요청 (DELETE_USER)
-     */
+
+    //사용자 삭제 요청 (DELETE_USER)
     private void handleDeleteUser(ActionEvent e) {
         // 1. 테이블에서 선택된 행 확인
         int selectedRow = userTable.getSelectedRow();
@@ -276,10 +266,10 @@ public class UserManagementFrame extends JFrame {
                 "정말로 '" + id + "' 사용자를 삭제하시겠습니까?", "삭제 확인", JOptionPane.YES_NO_OPTION);
         
         if (confirm == JOptionPane.YES_OPTION) {
-            // 1. 서버 요청 (프로토콜: "DELETE_USER:id")
+            // 서버 요청
             String response = NetworkService.getInstance().sendRequest("DELETE_USER:" + id);
 
-            // 2. 응답 처리
+            // 응답 처리
             if ("DELETE_SUCCESS".equals(response)) {
                 displayLog("사용자 삭제 성공: " + id);
                 loadUserList();
@@ -308,9 +298,7 @@ public class UserManagementFrame extends JFrame {
         });
     }
 
-    // =======================================================
-    // 🔐 인증 코드 처리 + 확장된 사용자 작업
-    // =======================================================
+    // 인증 코드 처리
     private String getAuthCodeEnv() {
         String code = System.getenv("ADMIN_AUTH_CODE");
         return (code == null || code.isEmpty()) ? "0000" : code.trim();
@@ -369,7 +357,7 @@ public class UserManagementFrame extends JFrame {
         }
     }
 
-    /** 입력 필드 초기화 */
+    // -입력 필드 초기화-
     private void clearInputFields() {
         txtId.setText("");
         txtName.setText("");

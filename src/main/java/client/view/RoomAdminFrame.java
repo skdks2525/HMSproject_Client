@@ -1,7 +1,7 @@
 package client.view;
 
 import java.awt.BorderLayout;
-import java.awt.Color; // 달력 라이브러리
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -32,7 +32,7 @@ import client.net.NetworkService;
 public class RoomAdminFrame extends JFrame {
 
     private JPanel roomGridPanel;
-    private JDateChooser dateChooser; // [복구] 날짜 선택기
+    private JDateChooser dateChooser;
 
     // 우측 필드
     private JTextField txtRoomNum, txtType, txtPrice, txtCapacity;
@@ -43,7 +43,7 @@ public class RoomAdminFrame extends JFrame {
     private JButton btnUpdateInfo; 
     private JButton btnSaveRequest; 
     
-    // [수정] 상태 강제 변경용 컴포넌트
+    // 객실상태를 강제로 변경하기 위한 용도
     private JComboBox<String> cmbForceStatus;
     private JButton btnForceStatus;
 
@@ -150,7 +150,7 @@ public class RoomAdminFrame extends JFrame {
         btnUpdateInfo.addActionListener(this::handleUpdateRoom);
         pBtnRoom.add(btnUpdateInfo);
         
-        // 3-2. 예약자 정보
+        // 예약자 정보
         JPanel guestInfoPanel = new JPanel(new GridLayout(5, 2, 5, 5));
         guestInfoPanel.setBorder(BorderFactory.createTitledBorder("예약자 정보"));
         guestInfoPanel.setBackground(Color.WHITE);
@@ -185,7 +185,7 @@ public class RoomAdminFrame extends JFrame {
         requestPanel.add(reqScroll, BorderLayout.CENTER);
         requestPanel.add(btnSaveRequest, BorderLayout.SOUTH);
 
-        // 3-3. 객실 상태 강제로 변경하는 기능
+        // 객실 상태 강제로 변경하는 기능
         JPanel statusPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         statusPanel.setBorder(BorderFactory.createTitledBorder("객실  변경"));
         statusPanel.setBackground(Color.WHITE);
@@ -234,7 +234,7 @@ public class RoomAdminFrame extends JFrame {
     private void loadRoomData() {
         roomGridPanel.removeAll();
         
-        // [수정] 선택된 날짜 전송
+        // 선택된 날짜 전송
         Date selectedDate = dateChooser.getDate();
         if (selectedDate == null) selectedDate = new Date();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
@@ -268,7 +268,7 @@ public class RoomAdminFrame extends JFrame {
         btn.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
         btn.setFocusPainted(false);
         
-        // 색상 로직
+        // 색상 로직(객실 상태에 따라 색으로 표현함)
         if ("Empty".equals(status)) {
             btn.setBackground(Color.LIGHT_GRAY); 
             btn.setText("<html><center><h2>" + roomNum + "</h2>빈 방<br>(Available)</center></html>");
@@ -307,7 +307,7 @@ public class RoomAdminFrame extends JFrame {
             txtGuestRequest.setText("");
             txtGuestRequest.setEditable(false);
             btnSaveRequest.setEnabled(false);
-            // 빈 방이면 상태 변경 중 '빈 방 만들기'는 의미 없음, 하지만 예약 생성은 여기서 안 함
+
         } else {
             txtGuestName.setText(info[4]);
             txtGuestNum.setText(info[6]);
@@ -333,7 +333,7 @@ public class RoomAdminFrame extends JFrame {
         int idx = cmbForceStatus.getSelectedIndex();
         if (idx <= 0) return; 
 
-        // [Case 1] 빈 방으로 변경 (예약 삭제) -> Index 4
+        // 빈 방으로 변경 (예약 삭제) -> Index 4
         if (idx == 4) {
             if (selectedResId == null || "-".equals(selectedResId)) {
                 JOptionPane.showMessageDialog(this, "삭제할 예약이 없습니다. (이미 빈 방입니다.)");
@@ -349,8 +349,8 @@ public class RoomAdminFrame extends JFrame {
 
         
 
-        // [Case 3] 예약 상태 변경 (Confirmed, CheckedIn, CheckedOut) -> Index 1, 2, 3
-        // 특별 처리: CheckedOut(퇴실 완료, idx==3)는 메뉴 주문 결제(미결제 확인)를 먼저 요구
+        // 예약 상태 변경 (Confirmed, CheckedIn, CheckedOut) -> Index 1, 2, 3
+        // CheckedOut(퇴실 완료, idx==3)는 메뉴 주문 결제(미결제 확인)를 먼저 요구
         if (idx == 3) {
             if (selectedResId == null || "-".equals(selectedResId)) {
                 JOptionPane.showMessageDialog(this, "예약이 없는 방입니다.\n퇴실 처리를 하려면 예약이 있어야 합니다.");
@@ -427,8 +427,7 @@ public class RoomAdminFrame extends JFrame {
 
             // 결제를 진행하는 경우
             if (totalAmount > 0) {
-                // 서버에 결제 요청: 이미 저장된 결제정보(payments.csv)를 사용하도록 요청
-                // 프로토콜 토큰 수(전체 8개)를 맞추기 위해 빈 필드를 포함합니다.
+                // 저장된 결제정보(payments.csv)를 사용하도록 서버에 요청
                 String payReq = String.format("UPDATE_PAYMENT:%s:Stored:::::%d", selectedResId, totalAmount);
                 String payRes = NetworkService.getInstance().sendRequest(payReq);
                 if ("PAYMENT_SUCCESS".equals(payRes)) {

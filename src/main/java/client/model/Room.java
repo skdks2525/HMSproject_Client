@@ -1,5 +1,4 @@
 package client.model;
-
 /**
  *
  * @author user

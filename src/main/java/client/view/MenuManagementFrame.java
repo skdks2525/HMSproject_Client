@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package client.view;
 import client.net.NetworkService;
 
@@ -144,7 +140,6 @@ public class MenuManagementFrame extends JFrame {
     // 이벤트 처리 및 Controller 연동
     
     private void setupEventListeners() {
-                        // [이벤트 처리 상세 설명]
                         // - 판매여부 콤보박스(cmbIsAvailable)에서 '판매중지' 선택 시 재고 입력란을 0으로 만들고 비활성화
                         // - '판매중' 선택 시 재고 입력란 활성화
                         // - 등록/수정/삭제/지우기 버튼에 각각 이벤트 리스너 연결

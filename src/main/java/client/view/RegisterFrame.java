@@ -128,8 +128,6 @@ public class RegisterFrame extends JFrame {
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         pack();
 
-        // --- 이벤트 핸들러 ---
-
         // [가입하기 버튼]
         btnRegister.addActionListener(e -> {
             String id = txtId.getText().trim();
@@ -139,7 +137,7 @@ public class RegisterFrame extends JFrame {
             String phone = txtPhone.getText().trim();
             String role = (String) cmbRole.getSelectedItem();
 
-            // 1. 유효성 검사
+            // 유효성 검사
             if(id.isEmpty() || name.isEmpty() || pw.isEmpty() || phone.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "모든 정보를 입력해주세요.");
                 return;
@@ -149,7 +147,7 @@ public class RegisterFrame extends JFrame {
                 return;
             }
 
-            // 2. 서버 전송 (선택한 권한)
+            // 서버 전송
             String request = String.format("ADD_USER:%s:%s:%s:%s:%s", id, name, pw, role, phone);
             String response = NetworkService.getInstance().sendRequest(request);
 

@@ -29,7 +29,6 @@ public class MyReservationPanel extends JPanel {
     }
 
     private void initComponents() {
-        // ... (기존 GUI 코드 100% 동일 유지) ...
         setLayout(new BorderLayout());
         setBackground(Color.WHITE);
 
@@ -101,7 +100,6 @@ public class MyReservationPanel extends JPanel {
                             } catch(Exception e) {}
                         }
 
-                        // createReservationCard에 'capacity' 정보도 넘겨줍니다.
                         JPanel card = createReservationCard(
                             info[0].trim(), // resId
                             info[1].trim(), // roomNum
@@ -142,7 +140,6 @@ public class MyReservationPanel extends JPanel {
         listPanel.repaint();
     }
 
-    // [수정] pricePerNight 인자 추가됨
     private JPanel createReservationCard(String resId, String roomNum, String name, String inDate, String outDate, String guests, String phone, String status, int pricePerNight, int capacity) {
         JPanel card = new JPanel(new BorderLayout(15, 15));
         card.setBackground(Color.WHITE);
@@ -166,7 +163,6 @@ public class MyReservationPanel extends JPanel {
         JLabel lblName = new JLabel();
         lblName.setFont(new Font("맑은 고딕", Font.BOLD, 16));
         
-        // [수정] 대소문자 무시 처리 (서버 UnPaid 대응)
         if ("Unpaid".equalsIgnoreCase(status)) {
             lblName.setText(name + "님 예약 (미결제 - 결제 필요)");
             lblName.setForeground(Color.RED);
@@ -200,7 +196,7 @@ public class MyReservationPanel extends JPanel {
         JPanel btnPanel = new JPanel(new GridLayout(2, 1, 0, 5));
         btnPanel.setOpaque(false);
 
-        // [핵심] Unpaid일 때만 결제 버튼 보임
+        // Unpaid일 때만 결제 버튼 보임
         if ("Unpaid".equalsIgnoreCase(status)) {
             JButton btnPay = new JButton("결제수단 등록");
             btnPay.setBackground(new Color(100, 150, 255));
@@ -230,31 +226,29 @@ public class MyReservationPanel extends JPanel {
         return card;
     }
 
-    /**
-     * [수정] 결제 요청: 카드 정보 입력 -> 금액 포함하여 서버 전송
-     */
+    // 결제 요청: 카드 정보 입력 -> 금액 포함하여 서버 전송
     private void requestPayment(String resId, String inDate, String outDate, String guestsStr, int pricePerNight, int capacity) {
         
         // 결제 금액 계산 (박수 * 1박요금)
         long totalAmount = 0;
         try {
-            // 1. 날짜 차이(연박) 계산
+            // 날짜 차이(연박) 계산
             LocalDate d1 = LocalDate.parse(inDate);
             LocalDate d2 = LocalDate.parse(outDate);
             long nights = ChronoUnit.DAYS.between(d1, d2);
             if (nights < 1) nights = 1;
 
-            // 2. 인원 수 파싱
+            // 인원 수 파싱
             int currentGuests = Integer.parseInt(guestsStr);
             
-            // 3. [핵심] 초과 인원 비용 계산
+            // 초과 인원 비용 계산
             int extraCost = 0;
             if (currentGuests > capacity) {
                 // 1인당 20,000원 * 초과인원
                 extraCost = (currentGuests - capacity) * 20000;
             }
 
-            // 4. 총액 계산: (기본박비 + 초과비용) * 연박일수
+            // 총액 계산: (기본박비 + 초과비용) * 연박일수
             totalAmount = (pricePerNight + extraCost) * nights;
 
         } catch (Exception e) {
@@ -262,7 +256,7 @@ public class MyReservationPanel extends JPanel {
             return;
         }
 
-        // 2. 결제 수단 선택 팝업
+        // 결제 수단 선택 팝업
         Object[] options = {"신용카드", "계좌이체", "무통장입금"};
         int choice = JOptionPane.showOptionDialog(this,
                 "결제 수단을 선택해주세요.\n결제 금액: " + String.format("%,d원", totalAmount), // 금액 안내
@@ -279,7 +273,7 @@ public class MyReservationPanel extends JPanel {
         String cardNum = "0", cvc = "0", expiry = "0", pw = "0";
 
         if ("신용카드".equals(method)) {
-            // [기존 UI] 신용카드 입력
+            // 신용카드 입력UI
             JPanel panel = new JPanel(new GridLayout(4, 2, 5, 5));
             JTextField txtNum = new JTextField();
             JTextField txtCVC = new JTextField();
@@ -304,15 +298,13 @@ public class MyReservationPanel extends JPanel {
                 return;
             }
         } else {
-            // [기존 UI] 계좌이체 입력
+            // 계좌이체 입력UI
             String sender = JOptionPane.showInputDialog(this, "입금자명을 입력해주세요:", method, JOptionPane.QUESTION_MESSAGE);
             if (sender == null || sender.trim().isEmpty()) return;
             cardNum = sender; 
         }
 
-        // 3. [핵심 수정] 서버 전송 - 금액(totalAmount)을 맨 뒤에 추가
-        // 형식: UPDATE_PAYMENT:ID:Method:Card:CVC:Expiry:PW:Amount
-        // (주의: 서버 ClientHandler의 UPDATE_PAYMENT 케이스에서 8개 토큰을 받도록 수정되어 있어야 함)
+        // 예약자에게 입력받은 결제정보를 서버에 전송함(전체금액도 같이 보냄)
         String request = String.format("UPDATE_PAYMENT:%s:%s:%s:%s:%s:%s:%d", 
                 resId, method, cardNum, cvc, expiry, pw, totalAmount);
         

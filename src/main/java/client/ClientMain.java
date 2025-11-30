@@ -1,6 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- */
 package client;
 import client.net.NetworkService;
 import client.view.LoginFrame;
@@ -19,6 +16,5 @@ public class ClientMain {
             LoginFrame login = new LoginFrame();
             login.setVisible(true);
         });
-        //String response = NetworkService.getInstance().sendRequest("LOGIN:adin:admin123");
     }
 }

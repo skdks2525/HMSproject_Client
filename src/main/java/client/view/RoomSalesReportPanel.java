@@ -46,10 +46,7 @@ public class RoomSalesReportPanel extends JPanel {
         Font cardFont = new Font("맑은 고딕", Font.BOLD, 15);
         Font btnFont = new Font("맑은 고딕", Font.BOLD, 15);
 
-        // 상단 제목/뒤로가기 패널
-        // 상단 제목/뒤로가기 패널 제거
-
-        // 기존 northWrap(검색/카드) 아래로 내림
+        //검색 카드
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 12));
         topPanel.setBackground(Color.WHITE);
         JLabel lblStart = new JLabel("시작일 (yyyy-MM-dd): ");

@@ -56,7 +56,8 @@ public class MainFrame extends JFrame {
         subtitle.setForeground(new Color(80, 80, 80));
         subtitle.setBorder(BorderFactory.createEmptyBorder(0, 80, 0, 0));
         topPanel.add(subtitle, BorderLayout.SOUTH);
-        // 오른쪽 상단에 환영 메시지(작게)
+        
+        // 오른쪽 상단에 환영 메시지
         JLabel welcomeLabelTop = new JLabel("환영합니다! 현재 권한: " + role);
         welcomeLabelTop.setFont(new Font("맑은 고딕", Font.PLAIN, 15));
         welcomeLabelTop.setForeground(new Color(80, 80, 80));
@@ -67,7 +68,7 @@ public class MainFrame extends JFrame {
         topPanel.add(rightPanel, BorderLayout.EAST);
         this.add(topPanel, BorderLayout.NORTH);
 
-        // --- 메뉴 버튼 카드 (권한별 배치) ---
+        // --- 메뉴 버튼 카드 ---
         userManagementButton = new JButton("직원/권한 관리");
         systemReportButton = new JButton("식음료 판매 관리");
         menukioskButton = new JButton("식음료 구매");
@@ -140,18 +141,12 @@ public class MainFrame extends JFrame {
         menuPanelWrap.setBackground(Color.WHITE);
         menuPanelWrap.add(menuCardPanel, new GridBagConstraints());
 
-        // 스크롤 필요시만 사용 (버튼이 많아질 경우)
-        // JScrollPane menuScrollPane = new JScrollPane(menuPanelWrap);
-        // menuScrollPane.setBorder(null);
-        // menuScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        // menuScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-        // menuScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+
 
 
         JPanel mainWrap = new JPanel(new BorderLayout());
         mainWrap.setBackground(Color.WHITE);
         mainWrap.add(menuPanelWrap, BorderLayout.CENTER);
-        // 중앙 안내 카드 제거 (환영 메시지는 상단으로 이동)
         this.add(mainWrap, BorderLayout.CENTER);
 
         applyAuthorization(role);
